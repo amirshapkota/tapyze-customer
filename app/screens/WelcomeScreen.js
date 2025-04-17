@@ -12,18 +12,17 @@ import {
 
 const { width } = Dimensions.get('window');
 
-// Onboarding screens content
 const slides = [
   {
     id: '1',
-    title: 'Welcome to TapPay',
+    title: 'Welcome to TAPYZE',
     description: 'Your secure digital wallet with tap-to-pay functionality',
     image: require('../assets/logo.png'),
   },
   {
     id: '2',
     title: 'Easy Payments',
-    description: 'Just tap your phone to make payments quickly and securely using NFC technology',
+    description: 'Just tap your card to make payments quickly and securely using NFC technology',
     image: require('../assets/tap-pay.png'),
   },
   {
@@ -58,13 +57,12 @@ const WelcomeScreen = ({ navigation }) => {
   };
 
   const handleSkip = () => {
-    // Skip to the last slide or navigate to the main app
     navigation.navigate('SignUp');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#f8f9fa" barStyle="dark-content" />
+      <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
       
       <View style={styles.header}>
         {currentSlideIndex > 0 && currentSlideIndex < slides.length - 1 && (
@@ -75,14 +73,15 @@ const WelcomeScreen = ({ navigation }) => {
       </View>
       
       <View style={styles.slideContainer}>
-        <View style={styles.imageContainer}>
+        <View style={styles.imageWrapper}>
           <Image
             source={slides[currentSlideIndex].image}
             style={styles.image}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
         
+        {/* Title and description */}
         <View style={styles.textContainer}>
           <Text style={styles.title}>{slides[currentSlideIndex].title}</Text>
           <Text style={styles.description}>
@@ -97,7 +96,7 @@ const WelcomeScreen = ({ navigation }) => {
               key={index}
               style={[
                 styles.paginationDot,
-                { backgroundColor: currentSlideIndex === index ? '#3a6df0' : '#d1d8e0' },
+                { backgroundColor: currentSlideIndex === index ? '#ed7b0e' : '#e0e0e0' },
               ]}
             />
           ))}
@@ -135,7 +134,7 @@ const WelcomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -149,7 +148,7 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 16,
-    color: '#546e7a',
+    color: '#000000',
     fontWeight: '500',
   },
   slideContainer: {
@@ -158,23 +157,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  imageContainer: {
+  imageWrapper: {
     width: width * 0.7,
     height: width * 0.7,
-    borderRadius: width * 0.35,
-    backgroundColor: '#e8eaf6',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 40,
-    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    elevation: 4,
   },
   image: {
-    width: width * 0.5,
-    height: width * 0.5,
+    width: '100%',
+    height: '100%',
+    borderRadius: width * 0.35, 
+    backgroundColor: '#f9f9f9',
   },
   textContainer: {
     alignItems: 'center',
@@ -184,14 +181,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#263238',
+    color: '#000000',
     marginBottom: 16,
     textAlign: 'center',
-    letterSpacing: 0.25,
   },
   description: {
     fontSize: 16,
-    color: '#546e7a',
+    color: '#333333',
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 12,
@@ -222,9 +218,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nextButton: {
-    backgroundColor: '#3a6df0',
+    backgroundColor: '#ed7b0e',
     elevation: 3,
-    shadowColor: '#3a6df0',
+    shadowColor: '#ed7b0e',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -240,7 +236,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   backButtonText: {
-    color: '#546e7a',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '600',
   },
