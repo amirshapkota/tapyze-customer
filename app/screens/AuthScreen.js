@@ -274,6 +274,7 @@ const AuthScreen = ({ navigation }) => {
 
             <View style={styles.socialButtonsContainer}>
               <TouchableOpacity style={styles.googleButton}>
+              <Image source={require('../assets/google-icon.png')} style={styles.icon} />
                 <Text style={styles.socialButtonText}>Google</Text>
               </TouchableOpacity>
             </View>
@@ -455,8 +456,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   googleButton: {
-    width: '60%',
-    height: 50,
+    flexDirection: 'row',
+    width: '40%',
+    height: 45,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -468,7 +470,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#333333',
+    marginLeft: 12,
+    textAlign: 'center',
   },
+  icon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  }
 });
 
 export default AuthScreen;
