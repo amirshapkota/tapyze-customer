@@ -92,7 +92,7 @@ const AuthScreen = ({ navigation }) => {
           
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Welcome to TapPay</Text>
+            <Text style={styles.headerTitle}>Welcome to TAPYZE</Text>
             <Text style={styles.headerSubtitle}>
               {isLogin ? 'Login to access your wallet' : 'Create a new account'}
             </Text>

@@ -46,7 +46,7 @@ const WelcomeScreen = ({ navigation }) => {
     if (currentSlideIndex < slides.length - 1) {
       setCurrentSlideIndex(currentSlideIndex + 1);
     } else {
-      navigation.navigate('SignUp');
+      navigation.navigate('Auth');
     }
   };
 
@@ -57,7 +57,7 @@ const WelcomeScreen = ({ navigation }) => {
   };
 
   const handleSkip = () => {
-    navigation.navigate('SignUp');
+    navigation.navigate('Auth');
   };
 
   return (
