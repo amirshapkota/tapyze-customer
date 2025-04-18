@@ -12,7 +12,8 @@ import {
   ScrollView,
   Dimensions,
   Animated,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -28,8 +29,6 @@ const AuthScreen = ({ navigation }) => {
     confirmPassword: ''
   });
   const [activeGender, setActiveGender] = useState(null);
-
-  // Animation value for the slider
   const [sliderPosition] = useState(new Animated.Value(0));
 
   const handleSliderToggle = (loginMode) => {
@@ -38,14 +37,23 @@ const AuthScreen = ({ navigation }) => {
       duration: 300,
       useNativeDriver: false
     }).start();
+
+    // Reset form fields
+    setFormData({
+      fullName: '',
+      email: '',
+      phone: '',
+      gender: '',
+      password: '',
+      confirmPassword: ''
+    });
+
+    setActiveGender(null);
     setIsLogin(loginMode);
   };
 
   const handleInputChange = (field, value) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleGenderSelect = (gender) => {
@@ -53,19 +61,63 @@ const AuthScreen = ({ navigation }) => {
     handleInputChange('gender', gender);
   };
 
+  const validateEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const validatePhone = (phone) =>
+    /^[0-9]{10,15}$/.test(phone);
+
+  const validateForm = () => {
+    if (isLogin) {
+      if (!formData.email.trim() && !formData.phone.trim()) {
+        Alert.alert('Error', 'Email or phone number is required.');
+        return false;
+      }
+      if (!formData.password.trim()) {
+        Alert.alert('Error', 'Password is required.');
+        return false;
+      }
+    } else {
+      if (!formData.fullName.trim()) {
+        Alert.alert('Error', 'Full name is required.');
+        return false;
+      }
+      if (!formData.email.trim() || !validateEmail(formData.email)) {
+        Alert.alert('Error', 'A valid email is required.');
+        return false;
+      }
+      if (!formData.phone.trim() || !validatePhone(formData.phone)) {
+        Alert.alert('Error', 'A valid phone number is required (10–15 digits).');
+        return false;
+      }
+      if (!formData.gender) {
+        Alert.alert('Error', 'Please select your gender.');
+        return false;
+      }
+      if (!formData.password || formData.password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters long.');
+        return false;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match.');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = () => {
-    // Handle form submission based on isLogin state
+    if (!validateForm()) return;
+
     if (isLogin) {
       console.log('Login with:', {
         emailOrPhone: formData.email || formData.phone,
         password: formData.password
       });
-      // Navigate to home screen or handle login API call
       // navigation.navigate('Home');
     } else {
       console.log('Sign up with:', formData);
-      // Handle signup API call
-      // Then navigate to verification or home screen
       // navigation.navigate('Verification');
     }
   };
@@ -77,11 +129,7 @@ const AuthScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Logo */}
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.logoContainer}>
             <Image
               source={require('../assets/logo.png')}
@@ -89,8 +137,7 @@ const AuthScreen = ({ navigation }) => {
               resizeMode="contain"
             />
           </View>
-          
-          {/* Header */}
+
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Welcome to TAPYZE</Text>
             <Text style={styles.headerSubtitle}>
@@ -98,67 +145,37 @@ const AuthScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Login/Signup Slider Toggle */}
+          {/* Slider */}
           <View style={styles.sliderContainer}>
-            <Animated.View 
-              style={[
-                styles.sliderIndicator, 
-                { left: sliderPosition }
-              ]} 
-            />
-            <TouchableOpacity
-              style={[
-                styles.sliderOption,
-                isLogin && styles.activeOption
-              ]}
-              onPress={() => handleSliderToggle(true)}
-            >
-              <Text style={[
-                styles.sliderOptionText,
-                isLogin && styles.activeOptionText
-              ]}>Login</Text>
+            <Animated.View style={[styles.sliderIndicator, { left: sliderPosition }]} />
+            <TouchableOpacity style={styles.sliderOption} onPress={() => handleSliderToggle(true)}>
+              <Text style={[styles.sliderOptionText, isLogin && styles.activeOptionText]}>Login</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.sliderOption,
-                !isLogin && styles.activeOption
-              ]}
-              onPress={() => handleSliderToggle(false)}
-            >
-              <Text style={[
-                styles.sliderOptionText,
-                !isLogin && styles.activeOptionText
-              ]}>Sign Up</Text>
+            <TouchableOpacity style={styles.sliderOption} onPress={() => handleSliderToggle(false)}>
+              <Text style={[styles.sliderOptionText, !isLogin && styles.activeOptionText]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Form Fields */}
+          {/* Form */}
           <View style={styles.formContainer}>
-            {/* Sign Up Fields */}
             {!isLogin && (
-              <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Full Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your full name"
-                    placeholderTextColor="#999"
-                    value={formData.fullName}
-                    onChangeText={(text) => handleInputChange('fullName', text)}
-                  />
-                </View>
-              </>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Full Name</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  onChangeText={(text) => handleInputChange('fullName', text)}
+                />
+              </View>
             )}
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>
-                {isLogin ? 'Email / Phone Number' : 'Email'}
-              </Text>
+              <Text style={styles.inputLabel}>{isLogin ? 'Email / Phone Number' : 'Email'}</Text>
               <TextInput
                 style={styles.input}
                 placeholder={isLogin ? "Enter email or phone number" : "Enter your email"}
-                placeholderTextColor="#999"
-                keyboardType={isLogin ? "default" : "email-address"}
+                keyboardType="email-address"
                 value={formData.email}
                 onChangeText={(text) => handleInputChange('email', text)}
               />
@@ -170,7 +187,6 @@ const AuthScreen = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your phone number"
-                  placeholderTextColor="#999"
                   keyboardType="phone-pad"
                   value={formData.phone}
                   onChangeText={(text) => handleInputChange('phone', text)}
@@ -182,42 +198,21 @@ const AuthScreen = ({ navigation }) => {
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Gender</Text>
                 <View style={styles.genderContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      activeGender === 'Male' && styles.activeGenderOption
-                    ]}
-                    onPress={() => handleGenderSelect('Male')}
-                  >
-                    <Text style={[
-                      styles.genderText,
-                      activeGender === 'Male' && styles.activeGenderText
-                    ]}>Male</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      activeGender === 'Female' && styles.activeGenderOption
-                    ]}
-                    onPress={() => handleGenderSelect('Female')}
-                  >
-                    <Text style={[
-                      styles.genderText,
-                      activeGender === 'Female' && styles.activeGenderText
-                    ]}>Female</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      activeGender === 'Other' && styles.activeGenderOption
-                    ]}
-                    onPress={() => handleGenderSelect('Other')}
-                  >
-                    <Text style={[
-                      styles.genderText,
-                      activeGender === 'Other' && styles.activeGenderText
-                    ]}>Other</Text>
-                  </TouchableOpacity>
+                  {['Male', 'Female', 'Other'].map((gender) => (
+                    <TouchableOpacity
+                      key={gender}
+                      style={[
+                        styles.genderOption,
+                        activeGender === gender && styles.activeGenderOption
+                      ]}
+                      onPress={() => handleGenderSelect(gender)}
+                    >
+                      <Text style={[
+                        styles.genderText,
+                        activeGender === gender && styles.activeGenderText
+                      ]}>{gender}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
             )}
@@ -227,7 +222,6 @@ const AuthScreen = ({ navigation }) => {
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
-                placeholderTextColor="#999"
                 secureTextEntry
                 value={formData.password}
                 onChangeText={(text) => handleInputChange('password', text)}
@@ -240,7 +234,6 @@ const AuthScreen = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm your password"
-                  placeholderTextColor="#999"
                   secureTextEntry
                   value={formData.confirmPassword}
                   onChangeText={(text) => handleInputChange('confirmPassword', text)}
@@ -254,17 +247,12 @@ const AuthScreen = ({ navigation }) => {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity 
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
-              <Text style={styles.submitButtonText}>
-                {isLogin ? 'Login' : 'Sign Up'}
-              </Text>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>{isLogin ? 'Login' : 'Sign Up'}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Alternative Auth Methods */}
+          {/* Social Auth */}
           <View style={styles.alternativeAuthContainer}>
             <View style={styles.dividerContainer}>
               <View style={styles.divider} />
@@ -274,7 +262,7 @@ const AuthScreen = ({ navigation }) => {
 
             <View style={styles.socialButtonsContainer}>
               <TouchableOpacity style={styles.googleButton}>
-              <Image source={require('../assets/google-icon.png')} style={styles.icon} />
+                <Image source={require('../assets/google-icon.png')} style={styles.icon} />
                 <Text style={styles.socialButtonText}>Google</Text>
               </TouchableOpacity>
             </View>
@@ -479,5 +467,4 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   }
 });
-
 export default AuthScreen;
