@@ -10,7 +10,7 @@ import {
   Dimensions
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const slides = [
   {
@@ -65,66 +65,83 @@ const WelcomeScreen = ({ navigation }) => {
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
       
       <View style={styles.header}>
-        {currentSlideIndex > 0 && currentSlideIndex < slides.length - 1 && (
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerLeft}>
+          {/* Empty space to balance the header */}
+        </View>
+        <View style={styles.headerRight}>
+          {currentSlideIndex > 0 && currentSlideIndex < slides.length - 1 ? (
+            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+              <Text style={styles.skipButtonText}>Skip</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.skipButtonPlaceholder} />
+          )}
+        </View>
       </View>
       
-      <View style={styles.slideContainer}>
-        <View style={styles.imageWrapper}>
-          <Image
-            source={slides[currentSlideIndex].image}
-            style={styles.image}
-            resizeMode="cover"
-          />
+      {/* Main content area*/}
+      <View style={styles.contentContainer}>
+        {/* Image section */}
+        <View style={styles.imageSection}>
+          <View style={styles.imageWrapper}>
+            <Image
+              source={slides[currentSlideIndex].image}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
         </View>
         
-        {/* Title and description */}
-        <View style={styles.textContainer}>
+        {/* Text section */}
+        <View style={styles.textSection}>
           <Text style={styles.title}>{slides[currentSlideIndex].title}</Text>
           <Text style={styles.description}>
             {slides[currentSlideIndex].description}
           </Text>
         </View>
 
-        {/* Pagination dots */}
-        <View style={styles.paginationContainer}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.paginationDot,
-                { backgroundColor: currentSlideIndex === index ? '#ed7b0e' : '#e0e0e0' },
-              ]}
-            />
-          ))}
+        {/* Pagination section */}
+        <View style={styles.paginationSection}>
+          <View style={styles.paginationContainer}>
+            {slides.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  { backgroundColor: currentSlideIndex === index ? '#ed7b0e' : '#e0e0e0' },
+                ]}
+              />
+            ))}
+          </View>
         </View>
         
-        {/* Bottom navigation buttons */}
-        <View style={styles.buttonContainer}>
-          {/* Back button */}
-          {currentSlideIndex > 0 ? (
-            <TouchableOpacity 
-              style={[styles.navButton, styles.backButton]}
-              onPress={handleBack}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 100 }} />
-          )}
-          
-          {/* Next/Get Started button */}
-          <TouchableOpacity
-            style={[styles.navButton, styles.nextButton]}
-            onPress={handleNext}
-          >
-            <Text style={styles.nextButtonText}>
-              {currentSlideIndex < slides.length - 1 ? 'Next' : 'Get Started'}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.navigationSection}>
+          <View style={styles.buttonContainer}>
+            <View style={styles.buttonWrapper}>
+              {currentSlideIndex > 0 ? (
+                <TouchableOpacity 
+                  style={[styles.navButton, styles.backButton]}
+                  onPress={handleBack}
+                >
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.buttonPlaceholder} />
+              )}
+            </View>
+            
+            {/* Next/Get Started button */}
+            <View style={styles.buttonWrapper}>
+              <TouchableOpacity
+                style={[styles.navButton, styles.nextButton]}
+                onPress={handleNext}
+              >
+                <Text style={styles.nextButtonText}>
+                  {currentSlideIndex < slides.length - 1 ? 'Next' : 'Get Started'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -137,30 +154,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   header: {
+    height: 60,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#fff',
+  },
+  headerLeft: {
+    width: 60,
+  },
+  headerRight: {
+    width: 60,
+    alignItems: 'flex-end',
   },
   skipButton: {
-    padding: 10,
+    padding: 8,
   },
   skipButtonText: {
     fontSize: 16,
     color: '#000000',
     fontWeight: '500',
   },
-  slideContainer: {
+  skipButtonPlaceholder: {
+    width: 60,
+    height: 40,
+  },
+  contentContainer: {
     flex: 1,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  imageSection: {
+    height: height * 0.35,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    alignItems: 'center',
+    paddingTop: 20,
   },
   imageWrapper: {
-    width: width * 0.7,
-    height: width * 0.7,
-    marginBottom: 40,
+    width: width * 0.8,
+    height: width * 0.6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -170,13 +203,14 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: width * 0.35, 
+    borderRadius: width * 0.3,
     backgroundColor: '#f9f9f9',
   },
-  textContainer: {
+  textSection: {
+    paddingHorizontal: 30,
     alignItems: 'center',
-    marginBottom: 40,
-    width: '100%',
+    height: height * 0.2,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 28,
@@ -190,11 +224,14 @@ const styles = StyleSheet.create({
     color: '#333333',
     textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: 12,
+  },
+  paginationSection: {
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
-    marginBottom: 60,
   },
   paginationDot: {
     width: 10,
@@ -202,18 +239,28 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginHorizontal: 5,
   },
+  navigationSection: {
+    height: height * 0.15,
+    justifyContent: 'center',
+    paddingBottom: 20,
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 24,
+  },
+  buttonWrapper: {
+    width: '48%',
+    alignItems: 'center',
+  },
+  buttonPlaceholder: {
     width: '100%',
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    height: 50,
   },
   navButton: {
     paddingVertical: 15,
-    paddingHorizontal: 30,
     borderRadius: 10,
-    minWidth: 100,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -229,6 +276,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   backButton: {
     backgroundColor: '#ffffff',
