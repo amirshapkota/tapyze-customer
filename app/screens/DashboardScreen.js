@@ -36,6 +36,34 @@ const promotions = [
   }
 ];
 
+// Sample data for linked cards
+const linkedCards = [
+  {
+    id: '1',
+    name: 'VISA Debit',
+    number: '•••• •••• •••• 8912',
+    type: 'LINKED CARD',
+    color: '#0057b8',
+    icon: 'card-outline'
+  },
+  {
+    id: '2',
+    name: 'Mastercard Credit',
+    number: '•••• •••• •••• 3654',
+    type: 'LINKED CARD',
+    color: '#1a1f71',
+    icon: 'card-outline'
+  },
+  {
+    id: '3',
+    name: 'American Express',
+    number: '•••• •••• •••• 7612',
+    type: 'LINKED CARD',
+    color: '#006fcf',
+    icon: 'card-outline'
+  }
+];
+
 const DashboardScreen = () => {
   const [balance, setBalance] = useState(2580.75);
   const [totalPoints, setTotalPoints] = useState(1842);
@@ -58,6 +86,19 @@ const DashboardScreen = () => {
         </View>
       </View>
       <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+    </TouchableOpacity>
+  );
+
+  const renderLinkedCard = ({ item }) => (
+    <TouchableOpacity style={styles.linkedCardItem}>
+      <View style={[styles.linkedCardIcon, { backgroundColor: item.color }]}>
+        <Ionicons name={item.icon} size={24} color="#FFFFFF" />
+      </View>
+      <View style={styles.linkedCardInfo}>
+        <Text style={styles.linkedCardName}>{item.name}</Text>
+        <Text style={styles.linkedCardNumber}>{item.number}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#AAAAAA" />
     </TouchableOpacity>
   );
 
@@ -93,14 +134,17 @@ const DashboardScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {/* Header Section */}
         <View style={styles.header}>
-          <Image 
-            source={require('../assets/logo.png')} // This would be replaced with your actual logo.png
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/logo.png')} // This would be replaced with your actual logo.png
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandName}>TAPYZE</Text>
+          </View>
           <TouchableOpacity style={styles.profileButton}>
             <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
           </TouchableOpacity>
@@ -177,6 +221,29 @@ const DashboardScreen = () => {
           </View>
         </View>
 
+        {/* Linked Cards Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Linked Cards</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>Link New</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.linkedCardsContainer}>
+          <FlatList
+            horizontal
+            data={linkedCards}
+            renderItem={renderLinkedCard}
+            keyExtractor={item => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.linkedCardsList}
+          />
+          <TouchableOpacity style={styles.addCardButton}>
+            <Ionicons name="add-circle" size={24} color="#ed7b0e" />
+            <Text style={styles.addCardText}>Add New Card</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Promotional Banners */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Special Offers</Text>
@@ -238,6 +305,9 @@ const DashboardScreen = () => {
             </View>
           ))}
         </View>
+        
+        {/* Bottom Navigation Spacer */}
+        <View style={styles.bottomNavSpacer} />
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -268,6 +338,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F8FA',
   },
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -275,9 +348,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   logoImage: {
-    height: 40,
-    width: 120,
+    height: 45,
+    width: 45,
+  },
+  brandName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginLeft: 8,
   },
   profileButton: {
     padding: 5,
@@ -467,6 +550,75 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 12,
   },
+  linkedCardsContainer: {
+    marginBottom: 10,
+  },
+  linkedCardsList: {
+    paddingHorizontal: 15,
+  },
+  linkedCardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginRight: 12,
+    width: 280,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  linkedCardIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#0057b8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  linkedCardInfo: {
+    flex: 1,
+  },
+  linkedCardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 5,
+  },
+  linkedCardNumber: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  addCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    marginHorizontal: 15,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  addCardText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ed7b0e',
+    marginLeft: 10,
+  },
   promotionsList: {
     paddingHorizontal: 15,
     paddingBottom: 5,
@@ -536,7 +688,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 15,
     marginHorizontal: 15,
-    marginBottom: 100,
     paddingVertical: 5,
     shadowColor: '#000',
     shadowOffset: {
@@ -609,6 +760,9 @@ const styles = StyleSheet.create({
     color: '#ed7b0e',
     fontSize: 11,
     fontWeight: '600',
+  },
+  bottomNavSpacer: {
+    height: 80, // This creates space at the bottom so content isn't hidden behind nav
   },
   bottomNav: {
     flexDirection: 'row',
