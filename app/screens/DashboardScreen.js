@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Sample data for transactions
@@ -70,6 +70,67 @@ const DashboardScreen = () => {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [selectedTab, setSelectedTab] = useState('all');
   const [showBalance, setShowBalance] = useState(true);
+  
+  // Add state for modals
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [showCardDetailsModal, setShowCardDetailsModal] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
+  
+  // New card form state
+  const [newCardName, setNewCardName] = useState('');
+  const [newCardNumber, setNewCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [selectedCardType, setSelectedCardType] = useState('VISA');
+
+  // Format card number input with spaces
+  const formatCardNumber = (text) => {
+    // Remove all non-digits
+    const digitsOnly = text.replace(/\D/g, '');
+    // Add space after every 4 digits
+    const formatted = digitsOnly.replace(/(\d{4})/g, '$1 ').trim();
+    return formatted.substring(0, 19); // Limit to 16 digits plus spaces
+  };
+
+  // Format expiry date input (MM/YY)
+  const formatExpiryDate = (text) => {
+    const digitsOnly = text.replace(/\D/g, '');
+    
+    if (digitsOnly.length > 2) {
+      return `${digitsOnly.substring(0, 2)}/${digitsOnly.substring(2, 4)}`;
+    }
+    return digitsOnly;
+  };
+
+  // Handle card selection for details popup
+  const handleCardSelect = (card) => {
+    setSelectedCard(card);
+    setShowCardDetailsModal(true);
+  };
+
+  // Handle adding a new card
+  const handleAddCard = () => {
+    // Reset form fields and show modal
+    setNewCardName('');
+    setNewCardNumber('');
+    setExpiryDate('');
+    setCvv('');
+    setShowAddCardModal(true);
+  };
+
+  // Handle submitting the new card form
+  const handleSubmitNewCard = () => {
+    // validate and save the new card
+    setShowAddCardModal(false);
+    
+    // add the card to your linked cards array and update state/database
+  };
+
+  // Handle removing a card
+  const handleRemoveCard = () => {
+    // remove the card from your data
+    setShowCardDetailsModal(false);
+  };
 
   // Filter transactions based on selected tab
   const filteredTransactions = selectedTab === 'all' 
@@ -90,7 +151,10 @@ const DashboardScreen = () => {
   );
 
   const renderLinkedCard = ({ item }) => (
-    <TouchableOpacity style={styles.linkedCardItem}>
+    <TouchableOpacity 
+      style={styles.linkedCardItem}
+      onPress={() => handleCardSelect(item)}
+    >
       <View style={[styles.linkedCardIcon, { backgroundColor: item.color }]}>
         <Ionicons name={item.icon} size={24} color="#FFFFFF" />
       </View>
@@ -139,7 +203,7 @@ const DashboardScreen = () => {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Image 
-              source={require('../assets/logo.png')} // This would be replaced with your actual logo.png
+              source={require('../assets/logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -224,7 +288,7 @@ const DashboardScreen = () => {
         {/* Linked Cards Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Linked Cards</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleAddCard}>
             <Text style={styles.seeAllText}>Link New</Text>
           </TouchableOpacity>
         </View>
@@ -238,7 +302,10 @@ const DashboardScreen = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.linkedCardsList}
           />
-          <TouchableOpacity style={styles.addCardButton}>
+          <TouchableOpacity 
+            style={styles.addCardButton}
+            onPress={handleAddCard}
+          >
             <Ionicons name="add-circle" size={24} color="#ed7b0e" />
             <Text style={styles.addCardText}>Add New Card</Text>
           </TouchableOpacity>
@@ -329,6 +396,196 @@ const DashboardScreen = () => {
           <Text style={styles.navText}>Settings</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Add New Card Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showAddCardModal}
+        onRequestClose={() => setShowAddCardModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Card</Text>
+              <TouchableOpacity onPress={() => setShowAddCardModal(false)}>
+                <Ionicons name="close-circle" size={28} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalContent}>
+              <Text style={styles.inputLabel}>Card Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. Work Credit Card"
+                value={newCardName}
+                onChangeText={setNewCardName}
+              />
+              
+              <Text style={styles.inputLabel}>Card Number</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="XXXX XXXX XXXX XXXX"
+                keyboardType="numeric"
+                maxLength={19}
+                value={newCardNumber}
+                onChangeText={(text) => setNewCardNumber(formatCardNumber(text))}
+              />
+              
+              <View style={styles.rowInputs}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Expiry Date</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="MM/YY"
+                    keyboardType="numeric"
+                    maxLength={5}
+                    value={expiryDate}
+                    onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
+                  />
+                </View>
+                
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>CVV</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="XXX"
+                    keyboardType="numeric"
+                    maxLength={3}
+                    value={cvv}
+                    onChangeText={setCvv}
+                    secureTextEntry={true}
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.cardTypeSelector}>
+                <Text style={styles.inputLabel}>Card Type</Text>
+                <View style={styles.cardTypeOptions}>
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedCardType === 'VISA' && styles.selectedCardType]}
+                    onPress={() => setSelectedCardType('VISA')}
+                  >
+                    <Ionicons name="card-outline" size={24} color={selectedCardType === 'VISA' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedCardType === 'VISA' ? styles.selectedCardTypeText : styles.cardTypeText}>VISA</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedCardType === 'MasterCard' && styles.selectedCardType]}
+                    onPress={() => setSelectedCardType('MasterCard')}
+                  >
+                    <Ionicons name="card-outline" size={24} color={selectedCardType === 'MasterCard' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedCardType === 'MasterCard' ? styles.selectedCardTypeText : styles.cardTypeText}>MasterCard</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedCardType === 'Amex' && styles.selectedCardType]}
+                    onPress={() => setSelectedCardType('Amex')}
+                  >
+                    <Ionicons name="card-outline" size={24} color={selectedCardType === 'Amex' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedCardType === 'Amex' ? styles.selectedCardTypeText : styles.cardTypeText}>Amex</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.submitButton}
+                onPress={handleSubmitNewCard}
+              >
+                <Text style={styles.submitButtonText}>Add Card</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.securityNote}>
+                Your card details are securely encrypted. We never store your full card number.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Card Details Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showCardDetailsModal}
+        onRequestClose={() => setShowCardDetailsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Card Details</Text>
+              <TouchableOpacity onPress={() => setShowCardDetailsModal(false)}>
+                <Ionicons name="close-circle" size={28} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedCard && (
+              <View style={styles.modalContent}>
+                <View style={[styles.cardDetailIcon, { backgroundColor: selectedCard.color }]}>
+                  <Ionicons name={selectedCard.icon} size={36} color="#FFFFFF" />
+                </View>
+                
+                <Text style={styles.cardDetailTitle}>{selectedCard.name}</Text>
+                <Text style={styles.cardDetailNumber}>{selectedCard.number}</Text>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Type</Text>
+                  <Text style={styles.cardDetailValue}>{selectedCard.type}</Text>
+                </View>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Status</Text>
+                  <View style={styles.statusContainer}>
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusText}>Active</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Last Used</Text>
+                  <Text style={styles.cardDetailValue}>Today, 9:45 AM</Text>
+                </View>
+                
+                <View style={styles.transactionSummary}>
+                  <Text style={styles.transactionSummaryTitle}>Recent Transactions</Text>
+                  <View style={styles.transactionSummaryItem}>
+                    <Text style={styles.transactionSummaryText}>Grocery Store</Text>
+                    <Text style={styles.transactionSummaryAmount}>-$65.43</Text>
+                  </View>
+                  <View style={styles.transactionSummaryItem}>
+                    <Text style={styles.transactionSummaryText}>Gas Station</Text>
+                    <Text style={styles.transactionSummaryAmount}>-$35.50</Text>
+                  </View>
+                  <TouchableOpacity style={styles.viewAllTransactions}>
+                    <Text style={styles.viewAllText}>View All Card Transactions</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#ed7b0e" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.cardActions}>
+                  <TouchableOpacity style={styles.cardActionButton}>
+                    <Ionicons name="refresh-outline" size={20} color="#ed7b0e" />
+                    <Text style={styles.cardActionText}>Update</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.cardActionButton}>
+                    <Ionicons name="lock-closed-outline" size={20} color="#ed7b0e" />
+                    <Text style={styles.cardActionText}>Lock</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardActionButton, styles.removeButton]}
+                    onPress={handleRemoveCard}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -800,6 +1057,220 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#ed7b0e',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  modalContent: {
+    paddingBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  textInput: {
+    backgroundColor: '#F7F8FA',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  rowInputs: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 5,
+  },
+  halfInput: {
+    width: '48%',
+  },
+  cardTypeSelector: {
+    marginTop: 16,
+  },
+  cardTypeOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  cardTypeOption: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    width: '30%',
+  },
+  selectedCardType: {
+    borderColor: '#ed7b0e',
+    backgroundColor: 'rgba(237, 123, 14, 0.05)',
+  },
+  cardTypeText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#777',
+  },
+  selectedCardTypeText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#ed7b0e',
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: '#ed7b0e',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  securityNote: {
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 12,
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
+  cardDetailIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  cardDetailTitle: {
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  cardDetailNumber: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 24,
+  },
+  cardDetailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  cardDetailLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  cardDetailValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CD964',
+    marginRight: 8,
+  },
+  statusText: {
+    color: '#4CD964',
+    fontWeight: '600',
+  },
+  transactionSummary: {
+    backgroundColor: '#F7F8FA',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  transactionSummaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  transactionSummaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  transactionSummaryText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  transactionSummaryAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  cardActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#F7F8FA',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  cardActionText: {
+    color: '#ed7b0e',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  removeButton: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+  },
+  removeButtonText: {
+    color: '#FF3B30',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 
