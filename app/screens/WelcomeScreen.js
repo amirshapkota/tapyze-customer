@@ -6,9 +6,12 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 
 import styles from '../styles/WelcomeScreenStyles';
+const { width, height } = Dimensions.get('window');
+
 
 const slides = [
   {
