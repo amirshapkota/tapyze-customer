@@ -428,46 +428,6 @@ const styles = StyleSheet.create({
       fontSize: 11,
       fontWeight: '600',
     },
-    bottomNavSpacer: {
-      height: 80, // This creates space at the bottom so content isn't hidden behind nav
-    },
-    bottomNav: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      backgroundColor: 'white',
-      paddingVertical: 12,
-      paddingHorizontal: 15,
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      borderTopWidth: 1,
-      borderTopColor: '#F0F0F0',
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: -2,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 5,
-      elevation: 5,
-    },
-    navItem: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-    },
-    navText: {
-      fontSize: 12,
-      marginTop: 4,
-      color: '#A0A0A0',
-      fontWeight: '500',
-    },
-    activeNavText: {
-      color: '#ed7b0e',
-      fontWeight: '600',
-    },
     modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',

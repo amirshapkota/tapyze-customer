@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList
 import { Ionicons } from '@expo/vector-icons';
 
 import styles from '../styles/DashboardScreenStyles';
+import BottomNav from '../components/BottomNav';
 
 // Sample data for transactions
 const initialTransactions = [
@@ -376,28 +377,10 @@ const DashboardScreen = () => {
         </View>
         
         {/* Bottom Navigation Spacer */}
-        <View style={styles.bottomNavSpacer} />
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home" size={24} color="#ed7b0e" />
-          <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="card-outline" size={24} color="#A0A0A0" />
-          <Text style={styles.navText}>Card</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="document-text-outline" size={24} color="#A0A0A0" />
-          <Text style={styles.navText}>Statements</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings-outline" size={24} color="#A0A0A0" />
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNav />
 
       {/* Add New Card Modal */}
       <Modal
