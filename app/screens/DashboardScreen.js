@@ -23,7 +23,7 @@ const promotions = [
   {
     id: '2',
     title: 'Refer & Earn',
-    description: 'Get $20 for every friend who joins TAPYZE',
+    description: 'Get Rs.20 for every friend who joins TAPYZE',
     backgroundColor: '#000000',
     icon: 'people'
   },
@@ -227,7 +227,7 @@ const DashboardScreen = () => {
               <Text style={styles.balanceLabel}>Total Balance</Text>
               <View style={styles.balanceRow}>
                 <Text style={styles.balanceAmount}>
-                  {showBalance ? `$${balance.toFixed(2)}` : '••••••'}
+                  {showBalance ? `Rs. ${balance.toFixed(2)}` : '••••••'}
                 </Text>
                 <TouchableOpacity 
                   style={styles.eyeButton}
@@ -544,22 +544,6 @@ const DashboardScreen = () => {
                 <View style={styles.cardDetailItem}>
                   <Text style={styles.cardDetailLabel}>Last Used</Text>
                   <Text style={styles.cardDetailValue}>Today, 9:45 AM</Text>
-                </View>
-                
-                <View style={styles.transactionSummary}>
-                  <Text style={styles.transactionSummaryTitle}>Recent Transactions</Text>
-                  <View style={styles.transactionSummaryItem}>
-                    <Text style={styles.transactionSummaryText}>Grocery Store</Text>
-                    <Text style={styles.transactionSummaryAmount}>-$65.43</Text>
-                  </View>
-                  <View style={styles.transactionSummaryItem}>
-                    <Text style={styles.transactionSummaryText}>Gas Station</Text>
-                    <Text style={styles.transactionSummaryAmount}>-$35.50</Text>
-                  </View>
-                  <TouchableOpacity style={styles.viewAllTransactions}>
-                    <Text style={styles.viewAllText}>View All Card Transactions</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#ed7b0e" />
-                  </TouchableOpacity>
                 </View>
                 
                 <View style={styles.cardActions}>
@@ -1214,35 +1198,6 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#4CD964',
     fontWeight: '600',
-  },
-  transactionSummary: {
-    backgroundColor: '#F7F8FA',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  transactionSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  transactionSummaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  transactionSummaryText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  transactionSummaryAmount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
   },
   cardActions: {
     flexDirection: 'row',
