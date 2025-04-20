@@ -11,17 +11,17 @@ const Stack = createStackNavigator();
 
 function App() {
   return (
-    // <NavigationContainer>
-    //   <Stack.Navigator>
-    //     <Stack.Screen name="Welcome" component={WelcomeScreen} options={{
-    //         headerShown: false,
-    //       }}/>
-    //     <Stack.Screen name="Auth" component={AuthScreen} options={{
-    //         headerShown: false,
-    //       }}/>
-    //   </Stack.Navigator>
-    // </NavigationContainer>
-    <DashboardScreen />
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{
+            headerShown: false,
+          }}/>
+        <Stack.Screen name="Auth" component={AuthScreen} options={{
+            headerShown: false,
+          }}/>
+      </Stack.Navigator>
+    </NavigationContainer>
+    // <DashboardScreen />
   );
 }
 
