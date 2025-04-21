@@ -22,12 +22,10 @@ const CardManagementScreen = ({ navigation }) => {
 
   // Modals
   const [showPinModal, setShowPinModal] = useState(false);
-  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Form States
   const [pin, setPin] = useState('');
   const [dailyLimit, setDailyLimit] = useState('2000');
-  const [transactionLimit, setTransactionLimit] = useState('500');
 
   // Handle Card Lock/Unlock
   const toggleCardLock = () => {
@@ -59,12 +57,6 @@ const CardManagementScreen = ({ navigation }) => {
     Alert.alert("Success", "Your PIN has been updated successfully.");
   };
 
-  // Update Limits
-  const handleUpdateLimits = () => {
-    // Validation would go here
-    setShowLimitModal(false);
-    Alert.alert("Success", "Your spending limits have been updated successfully.");
-  };
 
   // Handle Report Lost
   const handleReportLost = () => {
@@ -204,21 +196,6 @@ const CardManagementScreen = ({ navigation }) => {
           
           <View style={styles.settingsItem}>
             <View style={styles.settingInfo}>
-              <Ionicons name="airplane-outline" size={24} color="#ed7b0e" />
-              <Text style={styles.settingLabel}>International Transactions</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#D1D1D6", true: "rgba(237, 123, 14, 0.3)" }}
-              thumbColor={internationalEnabled ? "#ed7b0e" : "#f4f3f4"}
-              ios_backgroundColor="#D1D1D6"
-              onValueChange={setInternationalEnabled}
-              value={internationalEnabled}
-              disabled={isCardLocked}
-            />
-          </View>
-          
-          <View style={styles.settingsItem}>
-            <View style={styles.settingInfo}>
               <Ionicons name="cash-outline" size={24} color="#ed7b0e" />
               <Text style={styles.settingLabel}>ATM Withdrawals</Text>
             </View>
@@ -232,17 +209,6 @@ const CardManagementScreen = ({ navigation }) => {
             />
           </View>
           
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={() => setShowLimitModal(true)}
-            disabled={isCardLocked}
-          >
-            <View style={styles.settingInfo}>
-              <Ionicons name="trending-up-outline" size={24} color="#ed7b0e" />
-              <Text style={styles.settingLabel}>Spending Limits</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#AAAAAA" />
-          </TouchableOpacity>
         </View>
 
         {/* Recent Transactions */}
@@ -349,55 +315,6 @@ const CardManagementScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* Spending Limits Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showLimitModal}
-        onRequestClose={() => setShowLimitModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Spending Limits</Text>
-              <TouchableOpacity onPress={() => setShowLimitModal(false)}>
-                <Ionicons name="close-circle" size={28} color="#666" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.modalContent}>
-              <Text style={styles.modalDescription}>
-                Set daily and per-transaction limits for your TAPYZE Premium Card.
-              </Text>
-              
-              <Text style={styles.inputLabel}>Daily Spending Limit (Rs.)</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter daily limit"
-                keyboardType="numeric"
-                value={dailyLimit}
-                onChangeText={setDailyLimit}
-              />
-              
-              <Text style={styles.inputLabel}>Per-Transaction Limit (Rs.)</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter transaction limit"
-                keyboardType="numeric"
-                value={transactionLimit}
-                onChangeText={setTransactionLimit}
-              />
-              
-              <TouchableOpacity 
-                style={styles.submitButton}
-                onPress={handleUpdateLimits}
-              >
-                <Text style={styles.submitButtonText}>Update Limits</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Bottom Navigation */}
       <BottomNav />
