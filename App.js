@@ -6,6 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import WelcomeScreen from './app/screens/WelcomeScreen'; 
 import AuthScreen from './app/screens/AuthScreen';
 import DashboardScreen from './app/screens/DashboardScreen';
+import CardManagementScreen from './app/screens/CardManagementScreen';
 
 const Stack = createStackNavigator();
 
@@ -21,7 +22,7 @@ function App() {
     //       }}/>
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <DashboardScreen />
+    <CardManagementScreen />
   );
 }
 
