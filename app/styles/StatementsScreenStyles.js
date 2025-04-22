@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   paginationContainer: {
-    marginBottom:40,
+    marginBottom: 40,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
