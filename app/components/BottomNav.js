@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navText: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 4,
     color: '#A0A0A0',
     fontWeight: '500',
