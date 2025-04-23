@@ -9,6 +9,7 @@ import DashboardScreen from './app/screens/DashboardScreen';
 import CardManagementScreen from './app/screens/CardManagementScreen';
 import StatementsScreen from './app/screens/StatementsScreen';
 import SettingsScreen from './app/screens/SettingsScreen';
+import EditProfileScreen from './app/screens/EditProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -24,7 +25,7 @@ function App() {
     //       }}/>
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <SettingsScreen />
+    <EditProfileScreen />
   );
 }
 
