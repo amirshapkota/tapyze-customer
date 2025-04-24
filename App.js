@@ -13,6 +13,7 @@ import EditProfileScreen from './app/screens/EditProfileScreen';
 import ChangePasswordScreen from './app/screens/ChangePasswordScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import DepositScreen from './app/screens/DepositScreen';
+import WithdrawScreen from './app/screens/WithdrawScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,7 +29,7 @@ function App() {
     //       }}/>
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <DepositScreen />
+    <DashboardScreen />
   );
 }
 
