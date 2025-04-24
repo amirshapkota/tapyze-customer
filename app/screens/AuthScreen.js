@@ -243,9 +243,11 @@ const AuthScreen = ({ navigation }) => {
             )}
 
             {isLogin && (
-              <TouchableOpacity style={styles.forgotPasswordContainer}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
+              <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotPasswordText}>
+                Forgot your current password?
+              </Text>
+            </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
