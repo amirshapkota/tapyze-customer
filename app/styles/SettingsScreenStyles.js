@@ -29,9 +29,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
   },
-  backButton: {
-    padding: 5,
-  },
   titleSection: {
     paddingHorizontal: 20,
     paddingBottom: 15,

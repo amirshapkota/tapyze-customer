@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, Switch, 
 import { Ionicons } from '@expo/vector-icons';
 
 import styles from '../styles/CardManagementScreenStyles';
-import BottomNav from '../components/BottomNav';
 
 const CardManagementScreen = ({ navigation }) => {
   // Card States
@@ -26,6 +25,10 @@ const CardManagementScreen = ({ navigation }) => {
   // Form States
   const [pin, setPin] = useState('');
   const [dailyLimit, setDailyLimit] = useState('2000');
+
+  const navigateToProfile = () => {
+    navigation.navigate('Settings');
+  };
 
   // Handle Card Lock/Unlock
   const toggleCardLock = () => {
@@ -83,14 +86,29 @@ const CardManagementScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#000000" />
+        
+      <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandName}>TAPYZE</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={navigateToProfile}
+          >
+            <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My TAPYZE Card</Text>
+        </View>
+        
+        <View style={styles.subHeader}>
+          <Text style={styles.subHeaderTitle}>My TAPYZE Card</Text>
           <View style={styles.placeholderView} />
         </View>
+
 
         {/* Card Display */}
         <View style={styles.cardContainer}>
@@ -194,21 +212,6 @@ const CardManagementScreen = ({ navigation }) => {
             />
           </View>
           
-          <View style={styles.settingsItem}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="cash-outline" size={24} color="#ed7b0e" />
-              <Text style={styles.settingLabel}>ATM Withdrawals</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#D1D1D6", true: "rgba(237, 123, 14, 0.3)" }}
-              thumbColor={atmWithdrawalsEnabled ? "#ed7b0e" : "#f4f3f4"}
-              ios_backgroundColor="#D1D1D6"
-              onValueChange={setAtmWithdrawalsEnabled}
-              value={atmWithdrawalsEnabled}
-              disabled={isCardLocked}
-            />
-          </View>
-          
         </View>
 
         {/* Recent Transactions */}
@@ -242,20 +245,6 @@ const CardManagementScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.otherActionsContainer}>
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="download-outline" size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.actionLabel}>Download Statement</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="wallet-outline" size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.actionLabel}>Add to Digital Wallet</Text>
-          </TouchableOpacity>
-          
           <TouchableOpacity 
             style={styles.actionItem}
             onPress={handleReportLost}
@@ -315,9 +304,6 @@ const CardManagementScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-
-      {/* Bottom Navigation */}
-      <BottomNav />
     </SafeAreaView>
   );
 };

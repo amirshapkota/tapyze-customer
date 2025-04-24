@@ -250,7 +250,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPassword')}>
+          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPassword')} >
             <Text style={styles.forgotPasswordText}>
               Forgot your current password?
             </Text>

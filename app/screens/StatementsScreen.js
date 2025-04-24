@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import styles from '../styles/StatementsScreenStyles';
-import BottomNav from '../components/BottomNav';
 
 // Sample data for statements (grouped by month)
 const initialStatements = [
@@ -496,8 +495,6 @@ const StatementsScreen = () => {
         />
       )}
 
-      {/* Bottom Navigation */}
-      <BottomNav />
     </SafeAreaView>
   );
 };

@@ -15,10 +15,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
   },
-  backButton: {
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoImage: {
+    height: 45,
+    width: 45,
+  },
+  brandName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginLeft: 8,
+  },
+  profileButton: {
     padding: 5,
   },
-  headerTitle: {
+  subHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  subHeaderTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000000',

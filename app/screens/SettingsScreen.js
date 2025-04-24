@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/SettingsScreenStyles';
-import BottomNav from '../components/BottomNav';
 
 import { useNavigation } from '@react-navigation/native';
 
@@ -65,9 +64,6 @@ const SettingsScreen = () => {
             />
             <Text style={styles.brandName}>TAPYZE</Text>
           </View>
-          <TouchableOpacity style={styles.backButton}>
-            <Ionicons name="chevron-back" size={28} color="#000000" />
-          </TouchableOpacity>
         </View>
 
         {/* Title Section */}
@@ -213,7 +209,7 @@ const SettingsScreen = () => {
               <Text style={styles.settingText}>About TAPYZE</Text>
             </View>
             <View style={styles.settingValue}>
-              <Text style={styles.versionText}>v3.2.1</Text>
+              <Text style={styles.versionText}>v1.0.0</Text>
               <Ionicons name="chevron-forward" size={20} color="#AAAAAA" />
             </View>
           </TouchableOpacity>
@@ -237,9 +233,6 @@ const SettingsScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <BottomNav />
     </SafeAreaView>
   );
 };

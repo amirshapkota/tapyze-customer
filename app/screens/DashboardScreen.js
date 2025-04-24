@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 import styles from '../styles/DashboardScreenStyles';
-import BottomNav from '../components/BottomNav';
 
 // Sample data for transactions
 const initialTransactions = [
@@ -68,6 +68,9 @@ const linkedCards = [
 ];
 
 const DashboardScreen = () => {
+  // Get the navigation object
+  const navigation = useNavigation();
+  
   const [balance, setBalance] = useState(2580.75);
   const [totalPoints, setTotalPoints] = useState(1842);
   const [transactions, setTransactions] = useState(initialTransactions);
@@ -139,6 +142,31 @@ const DashboardScreen = () => {
   const filteredTransactions = selectedTab === 'all' 
     ? transactions 
     : transactions.filter(transaction => transaction.type === selectedTab);
+
+  // Navigate to profile/settings screen
+  const navigateToProfile = () => {
+    navigation.navigate('Settings');
+  };
+
+  // Navigate to card management screen
+  const navigateToCardManagement = () => {
+    navigation.navigate('Card');
+  };
+
+  // Navigate to deposit screen
+  const navigateToDeposit = () => {
+    navigation.navigate('Deposit');
+  };
+
+  // Navigate to withdraw screen
+  const navigateToWithdraw = () => {
+    navigation.navigate('Withdraw');
+  };
+
+  // Navigate to see all transactions
+  const navigateToAllTransactions = () => {
+    navigation.navigate('Statements');
+  };
 
   const renderPromotion = ({ item }) => (
     <TouchableOpacity style={[styles.promotionBanner, { backgroundColor: item.backgroundColor }]}>
@@ -212,7 +240,10 @@ const DashboardScreen = () => {
             />
             <Text style={styles.brandName}>TAPYZE</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton}>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={navigateToProfile}
+          >
             <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
           </TouchableOpacity>
         </View>
@@ -250,11 +281,17 @@ const DashboardScreen = () => {
             </View>
           </View>
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={[styles.actionButton, styles.depositButton]}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.depositButton]}
+              onPress={navigateToDeposit}
+            >
               <Ionicons name="add-circle-outline" size={20} color="#FFF" />
               <Text style={styles.actionButtonText}>Deposit</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.withdrawButton]}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.withdrawButton]}
+              onPress={navigateToWithdraw}
+            >
               <Ionicons name="remove-circle-outline" size={20} color="#FFF" />
               <Text style={styles.actionButtonText}>Withdraw</Text>
             </TouchableOpacity>
@@ -264,13 +301,13 @@ const DashboardScreen = () => {
         {/* TAPYZE Card Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My TAPYZE Card</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={navigateToCardManagement}>
             <Text style={styles.seeAllText}>Manage</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.cardContainer}>
-          <View style={styles.card}>
+          <TouchableOpacity style={styles.card} onPress={navigateToCardManagement}>
             <View style={styles.cardHeader}>
               <View style={styles.cardLogo}>
                 <Text style={styles.cardLogoText}>TAPYZE</Text>
@@ -285,7 +322,7 @@ const DashboardScreen = () => {
                 <Text style={styles.rfidText}>Tap to Pay</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Linked Cards Section */}
@@ -334,7 +371,7 @@ const DashboardScreen = () => {
         {/* Transactions Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Transactions</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={navigateToAllTransactions}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -376,11 +413,7 @@ const DashboardScreen = () => {
           ))}
         </View>
         
-        {/* Bottom Navigation Spacer */}
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <BottomNav />
 
       {/* Add New Card Modal */}
       <Modal
@@ -558,6 +591,5 @@ const DashboardScreen = () => {
     </SafeAreaView>
   );
 };
-
 
 export default DashboardScreen;
