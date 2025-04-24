@@ -12,6 +12,7 @@ import SettingsScreen from './app/screens/SettingsScreen';
 import EditProfileScreen from './app/screens/EditProfileScreen';
 import ChangePasswordScreen from './app/screens/ChangePasswordScreen';
 import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
+import DepositScreen from './app/screens/DepositScreen';
 
 const Stack = createStackNavigator();
 
@@ -27,7 +28,7 @@ function App() {
     //       }}/>
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <ForgotPasswordScreen />
+    <DepositScreen />
   );
 }
 
