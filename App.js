@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-// Import your screens
+// Import screens
 import WelcomeScreen from './app/screens/WelcomeScreen'; 
 import AuthScreen from './app/screens/AuthScreen';
 import DashboardScreen from './app/screens/DashboardScreen';
@@ -42,6 +42,11 @@ const SettingsStackNavigator = () => {
       <SettingsStack.Screen 
         name="ChangePassword" 
         component={ChangePasswordScreen} 
+        options={{ headerShown: false }}
+      />
+      <SettingsStack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen} 
         options={{ headerShown: false }}
       />
     </SettingsStack.Navigator>

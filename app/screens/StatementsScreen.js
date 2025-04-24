@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, FlatList, Modal, TextInput, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+
 
 import styles from '../styles/StatementsScreenStyles';
 
@@ -40,6 +42,9 @@ const initialStatements = [
 ];
 
 const StatementsScreen = () => {
+  
+  const navigation = useNavigation();
+  
   const [statements, setStatements] = useState(initialStatements);
   const [filteredStatements, setFilteredStatements] = useState(initialStatements);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -53,6 +58,10 @@ const StatementsScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+
+  const navigateToProfile = () => {
+    navigation.navigate('Settings');
+  };
   
   // Calculate totals for the period
   const [periodTotals, setPeriodTotals] = useState({
@@ -212,9 +221,12 @@ const StatementsScreen = () => {
           />
           <Text style={styles.brandName}>TAPYZE</Text>
         </View>
-        <TouchableOpacity style={styles.profileButton}>
-          <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
-        </TouchableOpacity>
+        <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={navigateToProfile}
+          >
+            <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
+          </TouchableOpacity>
       </View>
 
       <View style={styles.titleContainer}>

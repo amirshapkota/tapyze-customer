@@ -3,7 +3,13 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Imag
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/ForgotPasswordScreenStyles';
 
-const ForgotPasswordScreen = ({ navigation }) => {
+import { useNavigation } from '@react-navigation/native';
+
+
+const ForgotPasswordScreen = () => {
+
+  const navigation = useNavigation();
+  
   // State variables
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +131,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
       Alert.alert(
         "Success",
         "Your password has been reset successfully",
-        [{ text: "Login Now", onPress: () => navigation.navigate('Login') }]
+        [{ text: "Continue", onPress: () => navigation.popToTop() }]
       );
     }, 1500);
   };
@@ -181,7 +187,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
         style={styles.secondaryActionButton}
         onPress={() => navigation.goBack()}
       >
-        <Text style={styles.secondaryActionButtonText}>Back to Login</Text>
+        <Text style={styles.secondaryActionButtonText}>Go Back</Text>
       </TouchableOpacity>
     </>
   );
