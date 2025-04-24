@@ -29,7 +29,27 @@ function App() {
     //       }}/>
     //   </Stack.Navigator>
     // </NavigationContainer>
-    <DashboardScreen />
+    // <SettingsScreen />
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen 
+            name="Settings" 
+            component={SettingsScreen} 
+            options={{ headerShown: false }} 
+          />
+          <Stack.Screen 
+            name="EditProfile" 
+            component={EditProfileScreen} 
+            options={{ headerShown: false }} 
+          />
+          <Stack.Screen 
+            name="ChangePassword" 
+            component={ChangePasswordScreen} 
+            options={{ headerShown: false }} 
+          />
+      </Stack.Navigator>
+        
+    </NavigationContainer>
   );
 }
 

@@ -4,9 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/SettingsScreenStyles';
 import BottomNav from '../components/BottomNav';
 
+import { useNavigation } from '@react-navigation/native';
+
 const SettingsScreen = () => {
   // State for toggle settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  const navigation = useNavigation();
+  
   
   // User profile info
   const userProfile = {
@@ -81,9 +86,9 @@ const SettingsScreen = () => {
               <Text style={styles.profileName}>{userProfile.name}</Text>
               <Text style={styles.profileType}>{userProfile.accountType} Member</Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
-              <Ionicons name="pencil" size={20} color="#ed7b0e" />
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile', { userProfile })} >
+            <Ionicons name="pencil" size={20} color="#ed7b0e" />
+          </TouchableOpacity>
           </View>
           
           <View style={styles.profileDetails}>
@@ -145,7 +150,7 @@ const SettingsScreen = () => {
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Security</Text>
           
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('ChangePassword')}>
             <View style={styles.settingInfo}>
               <Ionicons name="lock-closed-outline" size={24} color="#333" />
               <Text style={styles.settingText}>Change Password</Text>
