@@ -66,6 +66,27 @@ const linkedCards = [
     icon: 'card-outline'
   }
 ];
+// Sample data for linked bank accounts
+const linkedBankAccounts = [
+  {
+    id: '1',
+    name: 'Primary Checking',
+    number: '•••• 4521',
+    type: 'SAVINGS',
+    bankName: 'HDFC Bank',
+    color: '#44a1e0',
+    icon: 'wallet-outline'
+  },
+  {
+    id: '2',
+    name: 'Business Account',
+    number: '•••• 9872',
+    type: 'CURRENT',
+    bankName: 'ICICI Bank',
+    color: '#6c3dd5',
+    icon: 'wallet-outline'
+  }
+];
 
 const DashboardScreen = () => {
   // Get the navigation object
@@ -108,6 +129,17 @@ const DashboardScreen = () => {
     return digitsOnly;
   };
 
+  // Add state for bank account modals
+  const [showAddBankModal, setShowAddBankModal] = useState(false);
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
+
+  // New bank account form state
+  const [newBankName, setNewBankName] = useState('');
+  const [newAccountNumber, setNewAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [selectedAccountType, setSelectedAccountType] = useState('SAVINGS');
+
   // Handle card selection for details popup
   const handleCardSelect = (card) => {
     setSelectedCard(card);
@@ -136,6 +168,30 @@ const DashboardScreen = () => {
   const handleRemoveCard = () => {
     // remove the card from your data
     setShowCardDetailsModal(false);
+  };
+
+  // Handle bank account selection for details popup
+  const handleBankSelect = (account) => {
+    setSelectedBankAccount(account);
+    setShowBankDetailsModal(true);
+  };
+
+  // Handle adding a new bank account
+  const handleAddBankAccount = () => {
+    // Reset form fields and show modal
+    setNewBankName('');
+    setNewAccountNumber('');
+    setIfscCode('');
+    setSelectedAccountType('SAVINGS');
+    setShowAddBankModal(true);
+  };
+
+  // Handle submitting the new bank account form
+  const handleSubmitNewBank = () => {
+    // validate and save the new bank account
+    setShowAddBankModal(false);
+    
+    // add the bank account to your linked accounts array and update state/database
   };
 
   // Filter transactions based on selected tab
@@ -192,6 +248,22 @@ const DashboardScreen = () => {
       <View style={styles.linkedCardInfo}>
         <Text style={styles.linkedCardName}>{item.name}</Text>
         <Text style={styles.linkedCardNumber}>{item.number}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#AAAAAA" />
+    </TouchableOpacity>
+  );
+
+  const renderLinkedBankAccount = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.linkedCardItem}
+      onPress={() => handleBankSelect(item)}
+    >
+      <View style={[styles.linkedCardIcon, { backgroundColor: item.color }]}>
+        <Ionicons name={item.icon} size={24} color="#FFFFFF" />
+      </View>
+      <View style={styles.linkedCardInfo}>
+        <Text style={styles.linkedCardName}>{item.name}</Text>
+        <Text style={styles.linkedCardNumber}>{item.bankName} • {item.number}</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#AAAAAA" />
     </TouchableOpacity>
@@ -351,6 +423,32 @@ const DashboardScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Linked Bank Accounts Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Linked Bank Accounts</Text>
+          <TouchableOpacity onPress={handleAddBankAccount}>
+            <Text style={styles.seeAllText}>Link New</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.linkedCardsContainer}>
+          <FlatList
+            horizontal
+            data={linkedBankAccounts}
+            renderItem={renderLinkedBankAccount}
+            keyExtractor={item => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.linkedCardsList}
+          />
+          <TouchableOpacity 
+            style={styles.addCardButton}
+            onPress={handleAddBankAccount}
+          >
+            <Ionicons name="add-circle" size={24} color="#ed7b0e" />
+            <Text style={styles.addCardText}>Add Bank Account</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Promotional Banners */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Special Offers</Text>
@@ -367,6 +465,7 @@ const DashboardScreen = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.promotionsList}
         />
+        
 
         {/* Transactions Section */}
         <View style={styles.sectionHeader}>
@@ -578,6 +677,152 @@ const DashboardScreen = () => {
                   <TouchableOpacity 
                     style={[styles.cardActionButton, styles.removeButton]}
                     onPress={handleRemoveCard}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Add New Bank Account Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showAddBankModal}
+        onRequestClose={() => setShowAddBankModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Bank Account</Text>
+              <TouchableOpacity onPress={() => setShowAddBankModal(false)}>
+                <Ionicons name="close-circle" size={28} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalContent}>
+              <Text style={styles.inputLabel}>Account Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. Primary Savings"
+                value={newBankName}
+                onChangeText={setNewBankName}
+              />
+              
+              <Text style={styles.inputLabel}>Account Number</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter Account Number"
+                keyboardType="numeric"
+                value={newAccountNumber}
+                onChangeText={setNewAccountNumber}
+              />
+              
+              <View style={styles.accountTypeSelector}>
+                <Text style={styles.inputLabel}>Account Type</Text>
+                <View style={styles.cardTypeOptions}>
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedAccountType === 'SAVINGS' && styles.selectedCardType]}
+                    onPress={() => setSelectedAccountType('SAVINGS')}
+                  >
+                    <Ionicons name="wallet-outline" size={24} color={selectedAccountType === 'SAVINGS' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedAccountType === 'SAVINGS' ? styles.selectedCardTypeText : styles.cardTypeText}>Savings</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedAccountType === 'CURRENT' && styles.selectedCardType]}
+                    onPress={() => setSelectedAccountType('CURRENT')}
+                  >
+                    <Ionicons name="briefcase-outline" size={24} color={selectedAccountType === 'CURRENT' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedAccountType === 'CURRENT' ? styles.selectedCardTypeText : styles.cardTypeText}>Current</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardTypeOption, selectedAccountType === 'FIXED' && styles.selectedCardType]}
+                    onPress={() => setSelectedAccountType('FIXED')}
+                  >
+                    <Ionicons name="lock-closed-outline" size={24} color={selectedAccountType === 'FIXED' ? "#ed7b0e" : "#777"} />
+                    <Text style={selectedAccountType === 'FIXED' ? styles.selectedCardTypeText : styles.cardTypeText}>Fixed</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.submitButton}
+                onPress={handleSubmitNewBank}
+              >
+                <Text style={styles.submitButtonText}>Link Account</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.securityNote}>
+                Your bank account information is end-to-end encrypted and securely stored. We never share your information with third parties.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Bank Account Details Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showBankDetailsModal}
+        onRequestClose={() => setShowBankDetailsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bank Account Details</Text>
+              <TouchableOpacity onPress={() => setShowBankDetailsModal(false)}>
+                <Ionicons name="close-circle" size={28} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedBankAccount && (
+              <View style={styles.modalContent}>
+                <View style={[styles.cardDetailIcon, { backgroundColor: selectedBankAccount.color }]}>
+                  <Ionicons name={selectedBankAccount.icon} size={36} color="#FFFFFF" />
+                </View>
+                
+                <Text style={styles.cardDetailTitle}>{selectedBankAccount.name}</Text>
+                <Text style={styles.cardDetailNumber}>{selectedBankAccount.bankName} • {selectedBankAccount.number}</Text>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Account Type</Text>
+                  <Text style={styles.cardDetailValue}>{selectedBankAccount.type}</Text>
+                </View>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Status</Text>
+                  <View style={styles.statusContainer}>
+                    <View style={styles.statusDot} />
+                    <Text style={styles.statusText}>Active</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.cardDetailItem}>
+                  <Text style={styles.cardDetailLabel}>Last Transaction</Text>
+                  <Text style={styles.cardDetailValue}>Today, 11:23 AM</Text>
+                </View>
+                
+                <View style={styles.cardActions}>
+                  <TouchableOpacity style={styles.cardActionButton}>
+                    <Ionicons name="sync-outline" size={20} color="#ed7b0e" />
+                    <Text style={styles.cardActionText}>Refresh</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.cardActionButton}>
+                    <Ionicons name="card-outline" size={20} color="#ed7b0e" />
+                    <Text style={styles.cardActionText}>Transfer</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.cardActionButton, styles.removeButton]}
+                    onPress={() => setShowBankDetailsModal(false)}
                   >
                     <Ionicons name="trash-outline" size={20} color="#FF3B30" />
                     <Text style={styles.removeButtonText}>Remove</Text>

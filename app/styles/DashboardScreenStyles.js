@@ -286,6 +286,9 @@ const styles = StyleSheet.create({
       color: '#ed7b0e',
       marginLeft: 10,
     },
+    accountTypeSelector: {
+      marginTop: 16,
+    },
     promotionsList: {
       paddingHorizontal: 15,
       paddingBottom: 5,

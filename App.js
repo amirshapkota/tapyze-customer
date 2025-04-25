@@ -159,7 +159,7 @@ const TabNavigator = () => {
 
 function App() {
   // Simple auth state management for testing
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   return (
     <NavigationContainer>
