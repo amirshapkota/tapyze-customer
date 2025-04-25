@@ -400,9 +400,6 @@ const DashboardScreen = () => {
         {/* Linked Cards Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Linked Cards</Text>
-          <TouchableOpacity onPress={handleAddCard}>
-            <Text style={styles.seeAllText}>Link New</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.linkedCardsContainer}>
@@ -426,9 +423,6 @@ const DashboardScreen = () => {
         {/* Linked Bank Accounts Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Linked Bank Accounts</Text>
-          <TouchableOpacity onPress={handleAddBankAccount}>
-            <Text style={styles.seeAllText}>Link New</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.linkedCardsContainer}>
