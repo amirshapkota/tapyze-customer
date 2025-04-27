@@ -1,4 +1,4 @@
 # tapyze-customer
 
-tap to pay payment system
+tap to pay payment system.
 customer fontend
