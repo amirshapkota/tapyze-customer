@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,11 +7,12 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  FlatList,
+  Animated,
 } from 'react-native';
 
 import styles from '../styles/WelcomeScreenStyles';
-const { width, height } = Dimensions.get('window');
-
+const { width } = Dimensions.get('window');
 
 const slides = [
   {
@@ -42,18 +43,22 @@ const slides = [
 
 const WelcomeScreen = ({ navigation }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const flatListRef = useRef(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const viewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setCurrentSlideIndex(viewableItems[0].index);
+    }
+  }).current;
+
+  const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
   const handleNext = () => {
     if (currentSlideIndex < slides.length - 1) {
-      setCurrentSlideIndex(currentSlideIndex + 1);
+      flatListRef.current.scrollToIndex({ index: currentSlideIndex + 1 });
     } else {
       navigation.navigate('Auth');
-    }
-  };
-
-  const handleBack = () => {
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(currentSlideIndex - 1);
     }
   };
 
@@ -61,93 +66,104 @@ const WelcomeScreen = ({ navigation }) => {
     navigation.navigate('Auth');
   };
 
+  const renderItem = ({ item }) => {
+    return (
+      <View style={styles.slide}>
+        <View style={styles.imageWrapper}>
+          <Image 
+            source={item.image} 
+            style={styles.image} 
+            resizeMode="contain" 
+          />
+        </View>
+        
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
       
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {/* Empty space to balance the header */}
-        </View>
-        <View style={styles.headerRight}>
-          {currentSlideIndex > 0 && currentSlideIndex < slides.length - 1 ? (
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipButtonText}>Skip</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.skipButtonPlaceholder} />
-          )}
-        </View>
+        
+        {currentSlideIndex < slides.length - 1 && (
+          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+            <Text style={styles.skipButtonText}>Skip</Text>
+          </TouchableOpacity>
+        )}
       </View>
       
-      {/* Main content area*/}
-      <View style={styles.contentContainer}>
-        {/* Image section */}
-        <View style={styles.imageSection}>
-          <View style={styles.imageWrapper}>
-            <Image
-              source={slides[currentSlideIndex].image}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          </View>
-        </View>
-        
-        {/* Text section */}
-        <View style={styles.textSection}>
-          <Text style={styles.title}>{slides[currentSlideIndex].title}</Text>
-          <Text style={styles.description}>
-            {slides[currentSlideIndex].description}
-          </Text>
-        </View>
-
-        {/* Pagination section */}
-        <View style={styles.paginationSection}>
-          <View style={styles.paginationContainer}>
-            {slides.map((_, index) => (
-              <View
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        renderItem={renderItem}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        keyExtractor={(item) => item.id}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
+        onViewableItemsChanged={viewableItemsChanged}
+        viewabilityConfig={viewConfig}
+        scrollEventThrottle={32}
+      />
+      
+      <View style={styles.footer}>
+        {/* Pagination */}
+        <View style={styles.paginationContainer}>
+          {slides.map((_, index) => {
+            const inputRange = [
+              (index - 1) * width,
+              index * width,
+              (index + 1) * width
+            ];
+            
+            const dotWidth = scrollX.interpolate({
+              inputRange,
+              outputRange: [10, 20, 10],
+              extrapolate: 'clamp'
+            });
+            
+            const opacity = scrollX.interpolate({
+              inputRange,
+              outputRange: [0.3, 1, 0.3],
+              extrapolate: 'clamp'
+            });
+            
+            return (
+              <Animated.View
                 key={index}
                 style={[
                   styles.paginationDot,
-                  { backgroundColor: currentSlideIndex === index ? '#ed7b0e' : '#e0e0e0' },
+                  { width: dotWidth, opacity, backgroundColor: '#ed7b0e' }
                 ]}
               />
-            ))}
-          </View>
+            );
+          })}
         </View>
         
-        <View style={styles.navigationSection}>
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonWrapper}>
-              {currentSlideIndex > 0 ? (
-                <TouchableOpacity 
-                  style={[styles.navButton, styles.backButton]}
-                  onPress={handleBack}
-                >
-                  <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.buttonPlaceholder} />
-              )}
-            </View>
-            
-            {/* Next/Get Started button */}
-            <View style={styles.buttonWrapper}>
-              <TouchableOpacity
-                style={[styles.navButton, styles.nextButton]}
-                onPress={handleNext}
-              >
-                <Text style={styles.nextButtonText}>
-                  {currentSlideIndex < slides.length - 1 ? 'Next' : 'Get Started'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+        {/* Navigation Buttons */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.navButton, styles.nextButton]}
+            onPress={handleNext}
+          >
+            <Text style={styles.nextButtonText}>
+              {currentSlideIndex < slides.length - 1 ? 'Next' : 'Get Started'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
   );
 };
-
 
 export default WelcomeScreen;
