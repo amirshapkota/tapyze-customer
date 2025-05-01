@@ -81,6 +81,12 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
       color: '#000000',
     },
+    statsCurrency: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#666',
+      marginLeft: 5,
+    },
     eyeButton: {
       marginLeft: 10,
       padding: 5,

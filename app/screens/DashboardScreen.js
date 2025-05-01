@@ -333,8 +333,9 @@ const DashboardScreen = () => {
               <Text style={styles.balanceLabel}>Total Balance</Text>
               <View style={styles.balanceRow}>
                 <Text style={styles.balanceAmount}>
-                  {showBalance ? `Rs. ${balance.toFixed(2)}` : '••••••'}
+                  {showBalance ? `${balance.toFixed(2)}` : '••••••'}
                 </Text>
+                <Text style={styles.statsCurrency}>Rs.</Text>
                 <TouchableOpacity 
                   style={styles.eyeButton}
                   onPress={() => setShowBalance(!showBalance)}
