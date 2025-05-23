@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 
 import styles from '../styles/DashboardScreenStyles';
 
@@ -66,6 +67,7 @@ const linkedCards = [
     icon: 'card-outline'
   }
 ];
+
 // Sample data for linked bank accounts
 const linkedBankAccounts = [
   {
@@ -89,8 +91,8 @@ const linkedBankAccounts = [
 ];
 
 const DashboardScreen = () => {
-  // Get the navigation object
   const navigation = useNavigation();
+  const { user, logout } = useAuth();
   
   const [balance, setBalance] = useState(2580.75);
   const [totalPoints, setTotalPoints] = useState(1842);
@@ -110,13 +112,22 @@ const DashboardScreen = () => {
   const [cvv, setCvv] = useState('');
   const [selectedCardType, setSelectedCardType] = useState('VISA');
 
+  // Add state for bank account modals
+  const [showAddBankModal, setShowAddBankModal] = useState(false);
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
+
+  // New bank account form state
+  const [newBankName, setNewBankName] = useState('');
+  const [newAccountNumber, setNewAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [selectedAccountType, setSelectedAccountType] = useState('SAVINGS');
+
   // Format card number input with spaces
   const formatCardNumber = (text) => {
-    // Remove all non-digits
     const digitsOnly = text.replace(/\D/g, '');
-    // Add space after every 4 digits
     const formatted = digitsOnly.replace(/(\d{4})/g, '$1 ').trim();
-    return formatted.substring(0, 19); // Limit to 16 digits plus spaces
+    return formatted.substring(0, 19);
   };
 
   // Format expiry date input (MM/YY)
@@ -129,16 +140,63 @@ const DashboardScreen = () => {
     return digitsOnly;
   };
 
-  // Add state for bank account modals
-  const [showAddBankModal, setShowAddBankModal] = useState(false);
-  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
-  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
+  // Handle logout
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await logout();
+            if (result.success) {
+              // Navigation will be handled automatically by AuthContext
+            } else {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
-  // New bank account form state
-  const [newBankName, setNewBankName] = useState('');
-  const [newAccountNumber, setNewAccountNumber] = useState('');
-  const [ifscCode, setIfscCode] = useState('');
-  const [selectedAccountType, setSelectedAccountType] = useState('SAVINGS');
+  // Navigation functions - Updated for your navigation structure
+  const navigateToProfile = () => {
+    // Navigate to Settings tab, then to SettingsMain screen
+    navigation.getParent()?.navigate('Settings', { 
+      screen: 'SettingsMain' 
+    });
+  };
+
+  const navigateToCardManagement = () => {
+    // Navigate to Card tab, then to CardMain screen
+    navigation.getParent()?.navigate('Card', { 
+      screen: 'CardMain' 
+    });
+  };
+
+  const navigateToDeposit = () => {
+    // Navigate within Home stack
+    navigation.navigate('Deposit');
+  };
+
+  const navigateToWithdraw = () => {
+    // Navigate within Home stack
+    navigation.navigate('Withdraw');
+  };
+
+  const navigateToAllTransactions = () => {
+    // Navigate to Statements tab, then to StatementsMain screen
+    navigation.getParent()?.navigate('Statements', { 
+      screen: 'StatementsMain' 
+    });
+  };
 
   // Handle card selection for details popup
   const handleCardSelect = (card) => {
@@ -148,7 +206,6 @@ const DashboardScreen = () => {
 
   // Handle adding a new card
   const handleAddCard = () => {
-    // Reset form fields and show modal
     setNewCardName('');
     setNewCardNumber('');
     setExpiryDate('');
@@ -158,16 +215,16 @@ const DashboardScreen = () => {
 
   // Handle submitting the new card form
   const handleSubmitNewCard = () => {
-    // validate and save the new card
     setShowAddCardModal(false);
-    
-    // add the card to your linked cards array and update state/database
+    // TODO: Implement API call to add card
+    Alert.alert('Success', 'Card added successfully!');
   };
 
   // Handle removing a card
   const handleRemoveCard = () => {
-    // remove the card from your data
     setShowCardDetailsModal(false);
+    // TODO: Implement API call to remove card
+    Alert.alert('Success', 'Card removed successfully!');
   };
 
   // Handle bank account selection for details popup
@@ -178,7 +235,6 @@ const DashboardScreen = () => {
 
   // Handle adding a new bank account
   const handleAddBankAccount = () => {
-    // Reset form fields and show modal
     setNewBankName('');
     setNewAccountNumber('');
     setIfscCode('');
@@ -188,41 +244,15 @@ const DashboardScreen = () => {
 
   // Handle submitting the new bank account form
   const handleSubmitNewBank = () => {
-    // validate and save the new bank account
     setShowAddBankModal(false);
-    
-    // add the bank account to your linked accounts array and update state/database
+    // TODO: Implement API call to add bank account
+    Alert.alert('Success', 'Bank account linked successfully!');
   };
 
   // Filter transactions based on selected tab
   const filteredTransactions = selectedTab === 'all' 
     ? transactions 
     : transactions.filter(transaction => transaction.type === selectedTab);
-
-  // Navigate to profile/settings screen
-  const navigateToProfile = () => {
-    navigation.navigate('Settings');
-  };
-
-  // Navigate to card management screen
-  const navigateToCardManagement = () => {
-    navigation.navigate('Card');
-  };
-
-  // Navigate to deposit screen
-  const navigateToDeposit = () => {
-    navigation.navigate('Deposit');
-  };
-
-  // Navigate to withdraw screen
-  const navigateToWithdraw = () => {
-    navigation.navigate('Withdraw');
-  };
-
-  // Navigate to see all transactions
-  const navigateToAllTransactions = () => {
-    navigation.navigate('Statements');
-  };
 
   const renderPromotion = ({ item }) => (
     <TouchableOpacity style={[styles.promotionBanner, { backgroundColor: item.backgroundColor }]}>
@@ -322,7 +352,7 @@ const DashboardScreen = () => {
 
         {/* Greeting Section */}
         <View style={styles.greetingSection}>
-          <Text style={styles.greeting}>Hello, John</Text>
+          <Text style={styles.greeting}>Hello, {user?.fullName || 'User'}</Text>
           <Text style={styles.greetingSubtext}>Welcome back to your wallet</Text>
         </View>
 
@@ -461,7 +491,6 @@ const DashboardScreen = () => {
           contentContainerStyle={styles.promotionsList}
         />
         
-
         {/* Transactions Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Transactions</Text>
@@ -509,6 +538,7 @@ const DashboardScreen = () => {
         
       </ScrollView>
 
+      {/* All Modal Components */}
       {/* Add New Card Modal */}
       <Modal
         animationType="slide"
