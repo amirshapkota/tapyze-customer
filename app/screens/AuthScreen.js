@@ -16,12 +16,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import styles from '../styles/AuthScreenStyles';
 
 const { width } = Dimensions.get('window');
 
 const AuthScreen = ({ navigation }) => {
+  const { login, signup } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -125,7 +126,7 @@ const AuthScreen = ({ navigation }) => {
           password: formData.password
         };
 
-        const result = await authService.customerLogin(credentials);
+        const result = await login(credentials, 'customer');
 
         if (result.success) {
           Alert.alert(
@@ -135,8 +136,8 @@ const AuthScreen = ({ navigation }) => {
               {
                 text: 'OK',
                 onPress: () => {
-                  // Navigate to Dashboard/Home screen
-                  navigation.replace('Dashboard'); // or navigation.navigate('Home')
+                  // Navigation will be handled automatically by AuthContext
+                  // The app will automatically show the MainApp navigator
                 }
               }
             ]
@@ -155,7 +156,7 @@ const AuthScreen = ({ navigation }) => {
           confirmPassword: formData.confirmPassword
         };
 
-        const result = await authService.customerSignup(signupData);
+        const result = await signup(signupData, 'customer');
 
         if (result.success) {
           Alert.alert(
@@ -165,8 +166,8 @@ const AuthScreen = ({ navigation }) => {
               {
                 text: 'OK',
                 onPress: () => {
-                  // Navigate to Dashboard/Home screen or Verification screen
-                  navigation.replace('Dashboard'); // or navigation.navigate('Verification')
+                  // Navigation will be handled automatically by AuthContext
+                  // The app will automatically show the MainApp navigator
                 }
               }
             ]
