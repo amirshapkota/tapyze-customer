@@ -13,14 +13,17 @@ import {
   Image,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 
+import authService from '../services/authService';
 import styles from '../styles/AuthScreenStyles';
-const { width } = Dimensions.get('window');
 
+const { width } = Dimensions.get('window');
 
 const AuthScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -108,18 +111,78 @@ const AuthScreen = ({ navigation }) => {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    if (isLogin) {
-      console.log('Login with:', {
-        emailOrPhone: formData.email || formData.phone,
-        password: formData.password
-      });
-      // navigation.navigate('Home');
-    } else {
-      console.log('Sign up with:', formData);
-      // navigation.navigate('Verification');
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // Handle Login
+        const credentials = {
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          password: formData.password
+        };
+
+        const result = await authService.customerLogin(credentials);
+
+        if (result.success) {
+          Alert.alert(
+            'Success',
+            result.message || 'Login successful!',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Navigate to Dashboard/Home screen
+                  navigation.replace('Dashboard'); // or navigation.navigate('Home')
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Login Failed', result.message);
+        }
+      } else {
+        // Handle Signup
+        const signupData = {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          gender: formData.gender,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        };
+
+        const result = await authService.customerSignup(signupData);
+
+        if (result.success) {
+          Alert.alert(
+            'Success',
+            result.message || 'Account created successfully!',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Navigate to Dashboard/Home screen or Verification screen
+                  navigation.replace('Dashboard'); // or navigation.navigate('Verification')
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Signup Failed', result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      Alert.alert(
+        'Error', 
+        'An unexpected error occurred. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -167,6 +230,7 @@ const AuthScreen = ({ navigation }) => {
                   placeholder="Enter your full name"
                   value={formData.fullName}
                   onChangeText={(text) => handleInputChange('fullName', text)}
+                  editable={!isLoading}
                 />
               </View>
             )}
@@ -179,6 +243,8 @@ const AuthScreen = ({ navigation }) => {
                 keyboardType="email-address"
                 value={formData.email}
                 onChangeText={(text) => handleInputChange('email', text)}
+                autoCapitalize="none"
+                editable={!isLoading}
               />
             </View>
 
@@ -191,6 +257,7 @@ const AuthScreen = ({ navigation }) => {
                   keyboardType="phone-pad"
                   value={formData.phone}
                   onChangeText={(text) => handleInputChange('phone', text)}
+                  editable={!isLoading}
                 />
               </View>
             )}
@@ -207,6 +274,7 @@ const AuthScreen = ({ navigation }) => {
                         activeGender === gender && styles.activeGenderOption
                       ]}
                       onPress={() => handleGenderSelect(gender)}
+                      disabled={isLoading}
                     >
                       <Text style={[
                         styles.genderText,
@@ -226,6 +294,7 @@ const AuthScreen = ({ navigation }) => {
                 secureTextEntry
                 value={formData.password}
                 onChangeText={(text) => handleInputChange('password', text)}
+                editable={!isLoading}
               />
             </View>
 
@@ -238,20 +307,40 @@ const AuthScreen = ({ navigation }) => {
                   secureTextEntry
                   value={formData.confirmPassword}
                   onChangeText={(text) => handleInputChange('confirmPassword', text)}
+                  editable={!isLoading}
                 />
               </View>
             )}
 
             {isLogin && (
-              <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text style={styles.forgotPasswordText}>
-                Forgot your current password?
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.forgotPasswordContainer} 
+                onPress={() => navigation.navigate('ForgotPassword')}
+                disabled={isLoading}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  Forgot your current password?
+                </Text>
+              </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>{isLogin ? 'Login' : 'Sign Up'}</Text>
+            <TouchableOpacity 
+              style={[styles.submitButton, isLoading && styles.disabledButton]} 
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={[styles.submitButtonText, { marginLeft: 10 }]}>
+                    {isLogin ? 'Logging in...' : 'Creating Account...'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isLogin ? 'Login' : 'Sign Up'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -264,7 +353,10 @@ const AuthScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.socialButtonsContainer}>
-              <TouchableOpacity style={styles.googleButton}>
+              <TouchableOpacity 
+                style={styles.googleButton}
+                disabled={isLoading}
+              >
                 <Image source={require('../assets/google-icon.png')} style={styles.icon} />
                 <Text style={styles.socialButtonText}>Google</Text>
               </TouchableOpacity>
