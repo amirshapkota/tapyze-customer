@@ -1,34 +1,48 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import styles from '../styles/SettingsScreenStyles';
 
-import { useNavigation } from '@react-navigation/native';
-
 const SettingsScreen = () => {
-  // State for toggle settings
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
+  // Get user data and logout function from AuthContext
+  const { user, logout } = useAuth();
   const navigation = useNavigation();
   
+  // State for toggle settings
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
-  // User profile info
+  // Use real user data from backend, with fallbacks
   const userProfile = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+977 98765 43210',
-    memberSince: 'March 2024',
+    name: user?.fullName || 'John Doe',
+    email: user?.email || 'john.doe@example.com',
+    phone: user?.phone || '+977 98765 43210',
+    memberSince: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long' 
+    }) : 'March 2024',
     accountType: 'Premium'
   };
 
-  // Handle logout
+  // Handle logout with AuthContext
   const handleLogout = () => {
     Alert.alert(
       "Logout",
       "Are you sure you want to logout?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Logout", onPress: () => console.log("Logout pressed"), style: "destructive" }
+        { 
+          text: "Logout", 
+          onPress: async () => {
+            const result = await logout();
+            if (!result.success) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+            // Navigation will be handled automatically by AuthContext
+          }, 
+          style: "destructive" 
+        }
       ]
     );
   };
@@ -82,9 +96,12 @@ const SettingsScreen = () => {
               <Text style={styles.profileName}>{userProfile.name}</Text>
               <Text style={styles.profileType}>{userProfile.accountType} Member</Text>
             </View>
-            <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile', { userProfile })} >
-            <Ionicons name="pencil" size={20} color="#ed7b0e" />
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.editButton} 
+              onPress={() => navigation.navigate('EditProfile', { userProfile })}
+            >
+              <Ionicons name="pencil" size={20} color="#ed7b0e" />
+            </TouchableOpacity>
           </View>
           
           <View style={styles.profileDetails}>
@@ -146,7 +163,10 @@ const SettingsScreen = () => {
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Security</Text>
           
-          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('ChangePassword')}>
+          <TouchableOpacity 
+            style={styles.settingItem} 
+            onPress={() => navigation.navigate('ChangePassword')}
+          >
             <View style={styles.settingInfo}>
               <Ionicons name="lock-closed-outline" size={24} color="#333" />
               <Text style={styles.settingText}>Change Password</Text>
