@@ -194,7 +194,15 @@ const styles = StyleSheet.create({
       width: 24,
       height: 24,
       resizeMode: 'contain',
-    }
+    },
+    loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    },
+    disabledButton: {
+      opacity: 0.6,
+    },
   });
 
   export default styles;
