@@ -1,4 +1,3 @@
-// app/services/authService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const BASE_URL = 'http://10.0.2.2:3000/api'; // For Android emulator
