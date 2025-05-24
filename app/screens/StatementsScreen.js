@@ -1,79 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, FlatList, Modal, TextInput, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, FlatList, Modal, TextInput, ActivityIndicator, Image, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useNavigation } from '@react-navigation/native';
-
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import walletService from '../services/walletService';
 
 import styles from '../styles/StatementsScreenStyles';
 
-// Sample data for statements (grouped by month)
-const initialStatements = [
-  {
-    id: 'apr2025',
-    month: 'April 2025',
-    transactions: [
-      { id: 's1', type: 'payment', title: 'Netflix Subscription', amount: -12.99, date: '2025-04-18', category: 'Entertainment', points: 13 },
-      { id: 's2', type: 'deposit', title: 'Deposit', amount: 1250.00, date: '2025-04-15', category: 'Income', points: 0 },
-      { id: 's3', type: 'payment', title: 'Grocery Store', amount: -65.43, date: '2025-04-14', category: 'Groceries', points: 65 }
-    ]
-  },
-  {
-    id: 'mar2025',
-    month: 'March 2025',
-    transactions: [
-      { id: 's4', type: 'withdraw', title: 'Withdrawal', amount: -100.00, date: '2025-03-28', category: 'Cash', points: 0 },
-      { id: 's5', type: 'payment', title: 'Gas Station', amount: -35.50, date: '2025-03-22', category: 'Transportation', points: 36 },
-      { id: 's6', type: 'payment', title: 'Restaurant Dinner', amount: -78.25, date: '2025-03-15', category: 'Dining', points: 78 },
-      { id: 's7', type: 'deposit', title: 'Deposit', amount: 1250.00, date: '2025-03-01', category: 'Income', points: 0 }
-    ]
-  },
-  {
-    id: 'feb2025',
-    month: 'February 2025',
-    transactions: [
-      { id: 's8', type: 'payment', title: 'Electric Bill', amount: -85.37, date: '2025-02-25', category: 'Utilities', points: 85 },
-      { id: 's9', type: 'payment', title: 'Mobile Phone Bill', amount: -45.00, date: '2025-02-18', category: 'Utilities', points: 45 },
-      { id: 's10', type: 'payment', title: 'Online Shopping', amount: -129.50, date: '2025-02-10', category: 'Shopping', points: 130 },
-      { id: 's11', type: 'withdraw', title: 'Withdrawal', amount: -60.00, date: '2025-02-05', category: 'Cash', points: 0 },
-      { id: 's12', type: 'deposit', title: 'Deposit', amount: 1250.00, date: '2025-02-01', category: 'Income', points: 0 }
-    ]
-  }
-];
-
 const StatementsScreen = () => {
-  
   const navigation = useNavigation();
+  const { user } = useAuth();
   
-  const [statements, setStatements] = useState(initialStatements);
-  const [filteredStatements, setFilteredStatements] = useState(initialStatements);
+  // State for transactions and statements
+  const [statements, setStatements] = useState([]);
+  const [filteredStatements, setFilteredStatements] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Filter and modal states
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [dateRange, setDateRange] = useState({ startDate: new Date('2025-02-01'), endDate: new Date() });
+  const [dateRange, setDateRange] = useState({ 
+    startDate: new Date(new Date().setMonth(new Date().getMonth() - 3)), // Last 3 months
+    endDate: new Date() 
+  });
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [activeDateInput, setActiveDateInput] = useState(null); // 'start' or 'end'
+  const [activeDateInput, setActiveDateInput] = useState(null);
   const [selectedExportFormat, setSelectedExportFormat] = useState('pdf');
 
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-
-  const navigateToProfile = () => {
-    navigation.navigate('Settings');
-  };
   
-  // Calculate totals for the period
+  // Totals state
   const [periodTotals, setPeriodTotals] = useState({
     income: 0,
     expenses: 0,
     points: 0
   });
 
+  // Load transactions when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAllTransactions();
+    }, [])
+  );
+
   useEffect(() => {
-    // Filter statements based on date range
     filterStatementsByDateRange();
-  }, [dateRange]);
+  }, [dateRange, allTransactions]);
 
   useEffect(() => {
     let totalItems = 0;
@@ -108,24 +87,56 @@ const StatementsScreen = () => {
     });
   }, [filteredStatements]);
 
+  // Load all transactions from API
+  const loadAllTransactions = async () => {
+    try {
+      setIsLoading(true);
+      const result = await walletService.getAllTransactions();
+      
+      if (result.success) {
+        setAllTransactions(result.transactions);
+        setStatements(result.groupedTransactions);
+        setFilteredStatements(result.groupedTransactions);
+      } else {
+        Alert.alert('Error', result.message);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      Alert.alert('Error', 'Failed to load transaction history');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadAllTransactions();
+    setRefreshing(false);
+  };
+
+  // Filter transactions by date range
   const filterStatementsByDateRange = () => {
+    if (allTransactions.length === 0) return;
+
     const startDate = new Date(dateRange.startDate);
     const endDate = new Date(dateRange.endDate);
     
     // Filter transactions based on date range
-    const filtered = initialStatements.map(group => {
-      const filteredTransactions = group.transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        return transactionDate >= startDate && transactionDate <= endDate;
-      });
-      
-      return {
-        ...group,
-        transactions: filteredTransactions
-      };
-    }).filter(group => group.transactions.length > 0);
+    const filteredTransactions = allTransactions.filter(transaction => {
+      const transactionDate = new Date(transaction.createdAt);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
     
-    setFilteredStatements(filtered);
+    // Group filtered transactions by month
+    const groupedFiltered = walletService.groupTransactionsByMonth(filteredTransactions);
+    setFilteredStatements(groupedFiltered);
+  };
+
+  const navigateToProfile = () => {
+    navigation.getParent()?.navigate('Settings', { 
+      screen: 'SettingsMain' 
+    });
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -157,10 +168,11 @@ const StatementsScreen = () => {
   const handleExport = () => {
     setIsDownloading(true);
     
-    // Simulate download process
+    // Simulate download process - in real app, this would call an API
     setTimeout(() => {
       setIsDownloading(false);
       setShowExportModal(false);
+      Alert.alert('Success', `Statement exported as ${selectedExportFormat.toUpperCase()} successfully!`);
     }, 2000);
   };
 
@@ -179,10 +191,13 @@ const StatementsScreen = () => {
         <View style={styles.transactionInfo}>
           <Text style={styles.transactionTitle}>{item.title}</Text>
           <Text style={styles.transactionCategory}>{item.category} • {formatDate(item.date)}</Text>
+          {item.reference && (
+            <Text style={styles.transactionReference}>Ref: {item.reference}</Text>
+          )}
         </View>
         <View style={styles.transactionAmountContainer}>
           <Text style={[styles.transactionAmount, isPositive ? styles.positiveAmount : styles.negativeAmount]}>
-            {isPositive ? '+' : ''}{item.amount.toFixed(2)}
+            {isPositive ? '+' : ''}{Math.abs(item.amount).toFixed(2)}
           </Text>
           {item.points > 0 && (
             <View style={styles.pointsContainer}>
@@ -199,6 +214,7 @@ const StatementsScreen = () => {
       <View style={styles.monthSection}>
         <View style={styles.monthHeader}>
           <Text style={styles.monthTitle}>{item.month}</Text>
+          <Text style={styles.monthCount}>({item.transactions.length} transactions)</Text>
         </View>
         
         {item.transactions.map((transaction) => (
@@ -209,6 +225,26 @@ const StatementsScreen = () => {
       </View>
     );
   };
+
+  const renderLoadingState = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#ed7b0e" />
+      <Text style={styles.loadingText}>Loading transaction history...</Text>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.noTransactionsContainer}>
+      <Ionicons name="receipt-outline" size={60} color="#CCCCCC" />
+      <Text style={styles.noTransactionsText}>No transactions found for the selected period</Text>
+      <TouchableOpacity 
+        style={styles.refreshButton}
+        onPress={loadAllTransactions}
+      >
+        <Text style={styles.refreshButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -222,11 +258,11 @@ const StatementsScreen = () => {
           <Text style={styles.brandName}>TAPYZE</Text>
         </View>
         <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={navigateToProfile}
-          >
-            <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
-          </TouchableOpacity>
+          style={styles.profileButton}
+          onPress={navigateToProfile}
+        >
+          <Ionicons name="person-circle-outline" size={40} color="#ed7b0e" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.titleContainer}>
@@ -261,12 +297,12 @@ const StatementsScreen = () => {
         <View style={styles.summaryBoxes}>
           <View style={styles.summaryBox}>
             <Text style={styles.summaryBoxTitle}>Income</Text>
-            <Text style={styles.summaryBoxValue}>Rs. {periodTotals.income.toFixed(2)}</Text>
+            <Text style={[styles.summaryBoxValue, styles.incomeValue]}>Rs. {periodTotals.income.toFixed(2)}</Text>
           </View>
           
           <View style={styles.summaryBox}>
             <Text style={styles.summaryBoxTitle}>Expenses</Text>
-            <Text style={styles.summaryBoxValue}>Rs. {periodTotals.expenses.toFixed(2)}</Text>
+            <Text style={[styles.summaryBoxValue, styles.expenseValue]}>Rs. {periodTotals.expenses.toFixed(2)}</Text>
           </View>
           
           <View style={[styles.summaryBox, styles.pointsBox]}>
@@ -278,40 +314,53 @@ const StatementsScreen = () => {
 
       <Text style={styles.sectionTitle}>Transaction History</Text>
 
-      <ScrollView style={styles.statementsContainer}>
-        {filteredStatements.length > 0 ? (
-          filteredStatements.map((monthGroup) => (
-            <View key={monthGroup.id}>
-              {renderMonthSection({item: monthGroup})}
-            </View>
-          ))
-        ) : (
-          <View style={styles.noTransactionsContainer}>
-            <Ionicons name="receipt-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.noTransactionsText}>No transactions found for the selected period</Text>
-          </View>
-        )}
-      </ScrollView>
+      {isLoading ? (
+        renderLoadingState()
+      ) : (
+        <ScrollView 
+          style={styles.statementsContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#ed7b0e']}
+              tintColor="#ed7b0e"
+            />
+          }
+        >
+          {filteredStatements.length > 0 ? (
+            filteredStatements.map((monthGroup) => (
+              <View key={monthGroup.id}>
+                {renderMonthSection({item: monthGroup})}
+              </View>
+            ))
+          ) : (
+            renderEmptyState()
+          )}
+        </ScrollView>
+      )}
 
-      <View style={styles.paginationContainer}>
-        <TouchableOpacity 
-          style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
-          disabled={currentPage === 1}
-          onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-        >
-          <Ionicons name="chevron-back" size={18} color={currentPage === 1 ? "#CCCCCC" : "#333333"} />
-        </TouchableOpacity>
-        
-        <Text style={styles.paginationText}>Page {currentPage} of {totalPages}</Text>
-        
-        <TouchableOpacity 
-          style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
-          disabled={currentPage === totalPages}
-          onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-        >
-          <Ionicons name="chevron-forward" size={18} color={currentPage === totalPages ? "#CCCCCC" : "#333333"} />
-        </TouchableOpacity>
-      </View>
+      {filteredStatements.length > 0 && (
+        <View style={styles.paginationContainer}>
+          <TouchableOpacity 
+            style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
+            disabled={currentPage === 1}
+            onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          >
+            <Ionicons name="chevron-back" size={18} color={currentPage === 1 ? "#CCCCCC" : "#333333"} />
+          </TouchableOpacity>
+          
+          <Text style={styles.paginationText}>Page {currentPage} of {totalPages}</Text>
+          
+          <TouchableOpacity 
+            style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
+            disabled={currentPage === totalPages}
+            onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          >
+            <Ionicons name="chevron-forward" size={18} color={currentPage === totalPages ? "#CCCCCC" : "#333333"} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Date Filter Modal */}
       <Modal
@@ -355,18 +404,6 @@ const StatementsScreen = () => {
               <View style={styles.predefinedFilters}>
                 <Text style={styles.inputLabel}>Quick Filters</Text>
                 <View style={styles.filterChips}>
-                  <TouchableOpacity 
-                    style={styles.filterChip}
-                    onPress={() => {
-                      const today = new Date();
-                      const lastMonth = new Date();
-                      lastMonth.setMonth(today.getMonth() - 1);
-                      setDateRange({startDate: lastMonth, endDate: today});
-                    }}
-                  >
-                    <Text style={styles.filterChipText}>Last 30 Days</Text>
-                  </TouchableOpacity>
-                  
                   <TouchableOpacity 
                     style={styles.filterChip}
                     onPress={() => {
@@ -474,8 +511,9 @@ const StatementsScreen = () => {
               <View style={styles.emailInputContainer}>
                 <TextInput
                   style={styles.emailInput}
-                  placeholder="Enter your email address"
+                  placeholder={user?.email || "Enter your email address"}
                   keyboardType="email-address"
+                  defaultValue={user?.email}
                 />
               </View>
               
@@ -485,7 +523,10 @@ const StatementsScreen = () => {
                 disabled={isDownloading}
               >
                 {isDownloading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={[styles.submitButtonText, {marginLeft: 10}]}>Exporting...</Text>
+                  </View>
                 ) : (
                   <Text style={styles.submitButtonText}>
                     Export Statement

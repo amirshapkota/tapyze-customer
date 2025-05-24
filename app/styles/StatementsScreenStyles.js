@@ -409,6 +409,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333333',
   },
+  monthCount: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+  },
+  transactionReference: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  incomeValue: {
+    color: '#22C55E', // Green for income
+  },
+  expenseValue: {
+    color: '#EF4444', // Red for expenses
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  noTransactionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noTransactionsText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+  },
+  refreshButton: {
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#ed7b0e',
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
 
 export default styles;

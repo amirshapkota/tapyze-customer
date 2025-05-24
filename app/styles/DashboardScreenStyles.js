@@ -622,6 +622,42 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       marginLeft: 8,
     },
+    loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  noTransactionsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  noTransactionsText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+  },
+  refreshButton: {
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#ed7b0e',
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   });
 
   export default styles;
