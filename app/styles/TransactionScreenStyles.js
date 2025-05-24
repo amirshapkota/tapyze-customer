@@ -384,6 +384,68 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
+  balanceContainer: {
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  balanceAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ed7b0e',
+  },
+
+  // Withdraw Button Styling
+  withdrawButton: {
+    backgroundColor: '#dc3545', // Red color for withdrawal
+  },
+
+  // Disabled Quick Amount
+  disabledQuickAmount: {
+    opacity: 0.5,
+    backgroundColor: '#f5f5f5',
+  },
+  disabledQuickAmountText: {
+    color: '#ccc',
+  },
+
+  // Error states
+  errorText: {
+    fontSize: 12,
+    color: '#dc3545',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+
+  // Info container for withdrawal specifics
+  withdrawalInfoContainer: {
+    backgroundColor: '#fff3cd',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+  },
+  withdrawalInfoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#856404',
+    marginBottom: 5,
+  },
+  withdrawalInfoText: {
+    fontSize: 14,
+    color: '#856404',
+    lineHeight: 20,
+  },
 });
 
 export default styles;

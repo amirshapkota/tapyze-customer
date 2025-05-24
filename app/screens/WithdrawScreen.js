@@ -1,25 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import walletService from '../services/walletService';
 import styles from '../styles/TransactionScreenStyles';
 
 const WithdrawScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [amount, setAmount] = useState('');
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [note, setNote] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState(0);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   
-  // Current balance - this would come from your app state/context
-  const currentBalance = 2580.75;
-  
-  // Sample withdrawal methods
+  // Sample withdrawal methods (for UI purposes - will be replaced with real bank APIs later)
   const withdrawalMethods = [
     { id: '1', name: 'VISA Debit', number: '••••8912', icon: 'card-outline', color: '#0057b8' },
-    { id: '2', name: 'Bank Account', number: 'ICICI ••••7281', icon: 'business-outline', color: '#333333' },
-    { id: '3', name: 'UPI Transfer', number: 'user@okaxis', icon: 'phone-portrait-outline', color: '#6739B7' },
+    { id: '2', name: 'Bank Transfer', number: 'HDFC Bank ••••4521', icon: 'business-outline', color: '#44a1e0' },
+    { id: '3', name: 'Cash Pickup', number: 'TAPYZE Agent', icon: 'location-outline', color: '#333333' },
   ];
   
-  // Quick amount options
-  const quickAmounts = [200, 500, 1000, 2000];
+  // Quick amount options (smaller amounts for withdrawal)
+  const quickAmounts = [500, 1000, 2000, 5000];
+
+  // Load current wallet balance
+  useEffect(() => {
+    loadBalance();
+  }, []);
+
+  const loadBalance = async () => {
+    try {
+      const result = await walletService.getWalletBalance();
+      if (result.success) {
+        setCurrentBalance(result.balance);
+      }
+    } catch (error) {
+      console.error('Error loading balance:', error);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
   
   // Format the amount with commas
   const formatAmount = (value) => {
@@ -34,12 +55,6 @@ const WithdrawScreen = ({ navigation }) => {
     setAmount(formattedAmount);
   };
   
-  // Check if withdrawal amount is valid
-  const isValidAmount = () => {
-    const numAmount = parseFloat(amount.replace(/,/g, ''));
-    return numAmount > 0 && numAmount <= currentBalance;
-  };
-  
   // Handle quick amount selection
   const handleQuickAmount = (value) => {
     setAmount(formatAmount(value.toString()));
@@ -49,23 +64,97 @@ const WithdrawScreen = ({ navigation }) => {
   const handleMethodSelect = (method) => {
     setSelectedMethod(method);
   };
-  
-  // Handle withdraw submission
-  const handleWithdraw = () => {
-    const numAmount = parseFloat(amount.replace(/,/g, ''));
+
+  // Validate withdrawal amount
+  const validateWithdrawal = () => {
+    const numericAmount = parseFloat(amount.replace(/,/g, ''));
     
-    if (numAmount > currentBalance) {
-      Alert.alert(
-        "Insufficient Balance",
-        "You don't have enough funds to withdraw this amount.",
-        [{ text: "OK" }]
-      );
-      return;
+    if (!amount || isNaN(numericAmount)) {
+      Alert.alert('Error', 'Please enter a valid amount');
+      return false;
     }
     
-    // Here you would implement the actual withdrawal functionality
-    // For now, just navigate back to dashboard
-    navigation.navigate('Dashboard');
+    if (numericAmount <= 0) {
+      Alert.alert('Error', 'Amount must be greater than 0');
+      return false;
+    }
+    
+    if (numericAmount < 100) {
+      Alert.alert('Error', 'Minimum withdrawal amount is Rs. 100');
+      return false;
+    }
+    
+    if (numericAmount > currentBalance) {
+      Alert.alert('Insufficient Balance', `You can only withdraw up to Rs. ${currentBalance.toFixed(2)}`);
+      return false;
+    }
+
+    if (!selectedMethod) {
+      Alert.alert('Error', 'Please select a withdrawal method');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Handle withdrawal submission (simulated since we don't have actual bank withdrawal API)
+  const handleWithdrawal = async () => {
+    if (!validateWithdrawal()) return;
+
+    const numericAmount = parseFloat(amount.replace(/,/g, ''));
+    
+    // Show confirmation dialog
+    Alert.alert(
+      'Confirm Withdrawal',
+      `Are you sure you want to withdraw Rs. ${amount} to ${selectedMethod.name}?\n\nNote: This is a demo withdrawal. In production, this would transfer money to your selected bank account.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            setIsLoading(true);
+            
+            try {
+              // For demo purposes, we'll create a debit transaction
+              // In production, this would integrate with bank APIs
+              
+              // Simulate withdrawal processing time
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              Alert.alert(
+                'Withdrawal Initiated!',
+                `Your withdrawal of Rs. ${amount} has been initiated successfully!\n\nThe money will be transferred to your ${selectedMethod.name} within 1-2 business days.\n\nTransaction ID: WD${Date.now().toString().slice(-6)}`,
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Reset form
+                      setAmount('');
+                      setSelectedMethod(null);
+                      setNote('');
+                      
+                      // Reload balance
+                      loadBalance();
+                      
+                      // Navigate back to dashboard
+                      navigation.navigate('DashboardMain');
+                    }
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Withdrawal error:', error);
+              Alert.alert('Error', 'Failed to process withdrawal. Please try again.');
+            } finally {
+              setIsLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -82,9 +171,30 @@ const WithdrawScreen = ({ navigation }) => {
       </View>
       
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.balanceInfoContainer}>
-          <Text style={styles.availableBalanceLabel}>Available Balance</Text>
-          <Text style={styles.availableBalanceAmount}>Rs. {currentBalance.toFixed(2)}</Text>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandName}>TAPYZE</Text>
+        </View>
+
+        {/* Balance Display */}
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceLabel}>Available Balance</Text>
+          {isLoadingBalance ? (
+            <ActivityIndicator size="small" color="#ed7b0e" />
+          ) : (
+            <Text style={styles.balanceAmount}>Rs. {currentBalance.toFixed(2)}</Text>
+          )}
+        </View>
+
+        {/* User Info */}
+        <View style={styles.userInfoContainer}>
+          <Text style={styles.depositingToText}>Withdrawing from</Text>
+          <Text style={styles.userNameText}>{user?.fullName}</Text>
+          <Text style={styles.userEmailText}>{user?.email}</Text>
         </View>
         
         <Text style={styles.sectionTitle}>Enter Amount</Text>
@@ -97,6 +207,7 @@ const WithdrawScreen = ({ navigation }) => {
             keyboardType="numeric"
             placeholder="0.00"
             placeholderTextColor="#CCCCCC"
+            editable={!isLoading}
           />
         </View>
         
@@ -104,15 +215,27 @@ const WithdrawScreen = ({ navigation }) => {
           {quickAmounts.map((value) => (
             <TouchableOpacity 
               key={value} 
-              style={styles.quickAmountButton}
+              style={[
+                styles.quickAmountButton,
+                amount === formatAmount(value.toString()) && styles.selectedQuickAmount,
+                value > currentBalance && styles.disabledQuickAmount
+              ]}
               onPress={() => handleQuickAmount(value)}
+              disabled={isLoading || value > currentBalance}
             >
-              <Text style={styles.quickAmountText}>Rs. {value}</Text>
+              <Text style={[
+                styles.quickAmountText,
+                amount === formatAmount(value.toString()) && styles.selectedQuickAmountText,
+                value > currentBalance && styles.disabledQuickAmountText
+              ]}>
+                Rs. {value}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
         
-        <Text style={styles.sectionTitle}>Withdraw To</Text>
+        <Text style={styles.sectionTitle}>Withdrawal Method</Text>
+        <Text style={styles.methodSubtitle}>Select where to receive your money</Text>
         <View style={styles.methodsContainer}>
           {withdrawalMethods.map((method) => (
             <TouchableOpacity 
@@ -122,6 +245,7 @@ const WithdrawScreen = ({ navigation }) => {
                 selectedMethod?.id === method.id && styles.selectedMethodItem
               ]}
               onPress={() => handleMethodSelect(method)}
+              disabled={isLoading}
             >
               <View style={[styles.methodIcon, { backgroundColor: method.color }]}>
                 <Ionicons name={method.icon} size={24} color="#FFFFFF" />
@@ -147,17 +271,22 @@ const WithdrawScreen = ({ navigation }) => {
           placeholder="What's this withdrawal for?"
           placeholderTextColor="#999999"
           multiline
+          editable={!isLoading}
         />
-        
-        <View style={styles.feeInfoContainer}>
-          <View style={styles.feeIconContainer}>
-            <Ionicons name="information-circle-outline" size={24} color="#FFFFFF" />
+
+        {/* Withdrawal Info */}
+        <View style={styles.transactionInfoContainer}>
+          <View style={styles.transactionInfoItem}>
+            <Ionicons name="time-outline" size={20} color="#ed7b0e" />
+            <Text style={styles.transactionInfoText}>Processing time: 1-2 business days</Text>
           </View>
-          <View style={styles.feeTextContainer}>
-            <Text style={styles.feeTitle}>Withdrawal Fee</Text>
-            <Text style={styles.feeDescription}>
-              Standard withdrawals are free. Instant withdrawals have a 1% fee.
-            </Text>
+          <View style={styles.transactionInfoItem}>
+            <Ionicons name="shield-checkmark-outline" size={20} color="#ed7b0e" />
+            <Text style={styles.transactionInfoText}>Secure and encrypted</Text>
+          </View>
+          <View style={styles.transactionInfoItem}>
+            <Ionicons name="cash-outline" size={20} color="#ed7b0e" />
+            <Text style={styles.transactionInfoText}>No withdrawal fees</Text>
           </View>
         </View>
         
@@ -165,14 +294,31 @@ const WithdrawScreen = ({ navigation }) => {
           <TouchableOpacity 
             style={[
               styles.submitButton,
-              (!amount || !selectedMethod || !isValidAmount()) && styles.disabledButton
+              styles.withdrawButton,
+              (!amount || !selectedMethod || isLoading) && styles.disabledButton
             ]}
-            disabled={!amount || !selectedMethod || !isValidAmount()}
-            onPress={handleWithdraw}
+            disabled={!amount || !selectedMethod || isLoading}
+            onPress={handleWithdrawal}
           >
-            <Text style={styles.submitButtonText}>Withdraw Now</Text>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={[styles.submitButtonText, { marginLeft: 10 }]}>
+                  Processing...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.submitButtonText}>
+                Withdraw Rs. {amount || '0.00'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* Disclaimer */}
+        <Text style={styles.disclaimerText}>
+          * Withdrawal feature is simulated for demo purposes. In production, this would integrate with bank APIs for actual money transfers.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
