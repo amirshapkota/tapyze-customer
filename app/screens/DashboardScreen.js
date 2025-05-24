@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, SafeAreaView, FlatList, Modal, TextInput, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import walletService from '../services/walletService';
 
 import styles from '../styles/DashboardScreenStyles';
-
-// Sample data for transactions
-const initialTransactions = [
-  { id: '1', type: 'payment', title: 'Netflix Subscription', amount: -12.99, date: '2025-04-18', category: 'Entertainment', points: 13 },
-  { id: '2', type: 'deposit', title: 'Paycheck Deposit', amount: 1250.00, date: '2025-04-15', category: 'Income', points: 0 },
-  { id: '3', type: 'payment', title: 'Grocery Store', amount: -65.43, date: '2025-04-14', category: 'Groceries', points: 65 },
-  { id: '4', type: 'withdraw', title: 'ATM Withdrawal', amount: -100.00, date: '2025-04-10', category: 'Cash', points: 0 },
-  { id: '5', type: 'payment', title: 'Gas Station', amount: -35.50, date: '2025-04-09', category: 'Transportation', points: 36 },
-];
 
 // Sample promotional banners
 const promotions = [
@@ -94,34 +86,102 @@ const DashboardScreen = () => {
   const navigation = useNavigation();
   const { user, logout } = useAuth();
   
-  const [balance, setBalance] = useState(2580.75);
-  const [totalPoints, setTotalPoints] = useState(1842);
-  const [transactions, setTransactions] = useState(initialTransactions);
+  // Wallet and transaction state
+  const [balance, setBalance] = useState(0);
+  const [currency, setCurrency] = useState('NPR');
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(true);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // UI state
   const [selectedTab, setSelectedTab] = useState('all');
   const [showBalance, setShowBalance] = useState(true);
   
-  // Add state for modals
+  // Modal states
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [showCardDetailsModal, setShowCardDetailsModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [showAddBankModal, setShowAddBankModal] = useState(false);
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
   
-  // New card form state
+  // Form states
   const [newCardName, setNewCardName] = useState('');
   const [newCardNumber, setNewCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [selectedCardType, setSelectedCardType] = useState('VISA');
-
-  // Add state for bank account modals
-  const [showAddBankModal, setShowAddBankModal] = useState(false);
-  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
-  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
-
-  // New bank account form state
   const [newBankName, setNewBankName] = useState('');
   const [newAccountNumber, setNewAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
   const [selectedAccountType, setSelectedAccountType] = useState('SAVINGS');
+
+  // Load wallet data when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      loadWalletData();
+      loadRecentTransactions();
+    }, [])
+  );
+
+  // Load wallet balance
+  const loadWalletData = async () => {
+    try {
+      setIsLoadingWallet(true);
+      const result = await walletService.getWalletBalance();
+      
+      if (result.success) {
+        setBalance(result.balance);
+        setCurrency(result.currency);
+      } else {
+        Alert.alert('Error', result.message);
+      }
+    } catch (error) {
+      console.error('Error loading wallet data:', error);
+      Alert.alert('Error', 'Failed to load wallet data');
+    } finally {
+      setIsLoadingWallet(false);
+    }
+  };
+
+  // Load recent transactions
+  const loadRecentTransactions = async () => {
+    try {
+      setIsLoadingTransactions(true);
+      const result = await walletService.getTransactionHistory(1, 5); // Get last 5 transactions
+      
+      if (result.success) {
+        const formattedTransactions = result.transactions.map(transaction => 
+          walletService.formatTransactionForDisplay(transaction)
+        );
+        setTransactions(formattedTransactions);
+        
+        // Calculate total points from recent transactions
+        const points = formattedTransactions.reduce((total, transaction) => {
+          return total + (transaction.points || 0);
+        }, 0);
+        setTotalPoints(points);
+      } else {
+        console.error('Failed to load transactions:', result.message);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadWalletData(),
+      loadRecentTransactions()
+    ]);
+    setRefreshing(false);
+  };
 
   // Format card number input with spaces
   const formatCardNumber = (text) => {
@@ -155,9 +215,7 @@ const DashboardScreen = () => {
           style: 'destructive',
           onPress: async () => {
             const result = await logout();
-            if (result.success) {
-              // Navigation will be handled automatically by AuthContext
-            } else {
+            if (!result.success) {
               Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           },
@@ -166,45 +224,39 @@ const DashboardScreen = () => {
     );
   };
 
-  // Navigation functions - Updated for your navigation structure
+  // Navigation functions
   const navigateToProfile = () => {
-    // Navigate to Settings tab, then to SettingsMain screen
     navigation.getParent()?.navigate('Settings', { 
       screen: 'SettingsMain' 
     });
   };
 
   const navigateToCardManagement = () => {
-    // Navigate to Card tab, then to CardMain screen
     navigation.getParent()?.navigate('Card', { 
       screen: 'CardMain' 
     });
   };
 
   const navigateToDeposit = () => {
-    // Navigate within Home stack
     navigation.navigate('Deposit');
   };
 
   const navigateToWithdraw = () => {
-    // Navigate within Home stack
     navigation.navigate('Withdraw');
   };
 
   const navigateToAllTransactions = () => {
-    // Navigate to Statements tab, then to StatementsMain screen
     navigation.getParent()?.navigate('Statements', { 
       screen: 'StatementsMain' 
     });
   };
 
-  // Handle card selection for details popup
+  // Card and bank account handlers
   const handleCardSelect = (card) => {
     setSelectedCard(card);
     setShowCardDetailsModal(true);
   };
 
-  // Handle adding a new card
   const handleAddCard = () => {
     setNewCardName('');
     setNewCardNumber('');
@@ -213,27 +265,21 @@ const DashboardScreen = () => {
     setShowAddCardModal(true);
   };
 
-  // Handle submitting the new card form
   const handleSubmitNewCard = () => {
     setShowAddCardModal(false);
-    // TODO: Implement API call to add card
     Alert.alert('Success', 'Card added successfully!');
   };
 
-  // Handle removing a card
   const handleRemoveCard = () => {
     setShowCardDetailsModal(false);
-    // TODO: Implement API call to remove card
     Alert.alert('Success', 'Card removed successfully!');
   };
 
-  // Handle bank account selection for details popup
   const handleBankSelect = (account) => {
     setSelectedBankAccount(account);
     setShowBankDetailsModal(true);
   };
 
-  // Handle adding a new bank account
   const handleAddBankAccount = () => {
     setNewBankName('');
     setNewAccountNumber('');
@@ -242,10 +288,8 @@ const DashboardScreen = () => {
     setShowAddBankModal(true);
   };
 
-  // Handle submitting the new bank account form
   const handleSubmitNewBank = () => {
     setShowAddBankModal(false);
-    // TODO: Implement API call to add bank account
     Alert.alert('Success', 'Bank account linked successfully!');
   };
 
@@ -317,7 +361,7 @@ const DashboardScreen = () => {
         </View>
         <View style={styles.transactionAmountContainer}>
           <Text style={[styles.transactionAmount, isPositive ? styles.positiveAmount : styles.negativeAmount]}>
-            {isPositive ? '+' : ''}{item.amount.toFixed(2)}
+            {isPositive ? '+' : ''}{Math.abs(item.amount).toFixed(2)}
           </Text>
           {item.points > 0 && (
             <View style={styles.pointsContainer}>
@@ -331,7 +375,17 @@ const DashboardScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#ed7b0e']}
+            tintColor="#ed7b0e"
+          />
+        }
+      >
         {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -362,10 +416,16 @@ const DashboardScreen = () => {
             <View>
               <Text style={styles.balanceLabel}>Total Balance</Text>
               <View style={styles.balanceRow}>
-                <Text style={styles.balanceAmount}>
-                  {showBalance ? `${balance.toFixed(2)}` : '••••••'}
-                </Text>
-                <Text style={styles.statsCurrency}>Rs.</Text>
+                {isLoadingWallet ? (
+                  <ActivityIndicator size="small" color="#ed7b0e" />
+                ) : (
+                  <>
+                    <Text style={styles.balanceAmount}>
+                      {showBalance ? `${balance.toFixed(2)}` : '••••••'}
+                    </Text>
+                    <Text style={styles.statsCurrency}>{currency}.</Text>
+                  </>
+                )}
                 <TouchableOpacity 
                   style={styles.eyeButton}
                   onPress={() => setShowBalance(!showBalance)}
@@ -493,7 +553,7 @@ const DashboardScreen = () => {
         
         {/* Transactions Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Transactions</Text>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
           <TouchableOpacity onPress={navigateToAllTransactions}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
@@ -529,16 +589,28 @@ const DashboardScreen = () => {
 
         {/* Transactions List */}
         <View style={styles.transactionsList}>
-          {filteredTransactions.map(transaction => (
-            <View key={transaction.id}>
-              {renderTransaction({item: transaction})}
+          {isLoadingTransactions ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#ed7b0e" />
+              <Text style={styles.loadingText}>Loading transactions...</Text>
             </View>
-          ))}
+          ) : filteredTransactions.length > 0 ? (
+            filteredTransactions.map(transaction => (
+              <View key={transaction.id}>
+                {renderTransaction({item: transaction})}
+              </View>
+            ))
+          ) : (
+            <View style={styles.noTransactionsContainer}>
+              <Ionicons name="receipt-outline" size={60} color="#CCCCCC" />
+              <Text style={styles.noTransactionsText}>No transactions yet</Text>
+            </View>
+          )}
         </View>
         
       </ScrollView>
 
-      {/* All Modal Components */}
+      {/* All Modal Components - keeping them the same */}
       {/* Add New Card Modal */}
       <Modal
         animationType="slide"
