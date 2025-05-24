@@ -293,6 +293,97 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  userInfoContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  depositingToText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  userNameText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 3,
+  },
+  userEmailText: {
+    fontSize: 14,
+    color: '#666',
+  },
+
+  // Method Selection
+  methodSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+    marginTop: -10,
+  },
+
+  // Quick Amount Selection
+  selectedQuickAmount: {
+    backgroundColor: '#ed7b0e',
+    borderColor: '#ed7b0e',
+  },
+  selectedQuickAmountText: {
+    color: '#FFFFFF',
+  },
+
+  // Bonus Points
+  bonusCalculation: {
+    fontWeight: '600',
+    color: '#ed7b0e',
+  },
+
+  // Transaction Info
+  transactionInfoContainer: {
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  transactionInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  transactionInfoText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+    flex: 1,
+  },
+
+  // Loading State
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Disclaimer
+  disclaimerText: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+
+  // Disabled Button
+  disabledButton: {
+    opacity: 0.6,
+  },
 });
 
 export default styles;
