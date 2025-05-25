@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const BASE_URL = 'http://10.0.2.2:3000/api'; // For Android emulator
 // const BASE_URL = 'http://localhost:3000/api'; // For iOS simulator
-const BASE_URL = 'http://192.168.1.78:5000/api'; // For physical device (replace XXX with your IP)
+const BASE_URL = 'http://192.168.1.78:5000/api'; // For physical device
 
 class AuthService {
   constructor() {
