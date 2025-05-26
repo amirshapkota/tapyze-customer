@@ -138,6 +138,106 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 8,
   },
+
+  // Loading styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 15,
+  },
+
+  // No Card State Styles
+  noCardContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 40,
+  },
+  noCardIcon: {
+    marginBottom: 25,
+  },
+  noCardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  noCardDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  assignCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ed7b0e',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 40,
+  },
+  assignCardButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  cardBenefitsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  benefitsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  benefitText: {
+    fontSize: 15,
+    color: '#333',
+    marginLeft: 12,
+    flex: 1,
+  },
+
+  // No Transactions State
+  noTransactionsContainer: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+  },
+  noTransactionsText: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+
   statusContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -151,14 +251,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
-  },
-  statusItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   statusItem: {
     flexDirection: 'row',
@@ -215,6 +307,9 @@ const styles = StyleSheet.create({
   },
   unlockButton: {
     backgroundColor: '#ed7b0e',
+  },
+  disabledActionButton: {
+    opacity: 0.6,
   },
   quickActionText: {
     color: '#FFFFFF',
@@ -392,7 +487,8 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   modalContent: {
-    paddingBottom: 20,
+    padding: 20,
+    paddingBottom: 30,
   },
   modalDescription: {
     fontSize: 16,
@@ -401,11 +497,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: '#333',
     marginBottom: 8,
-    marginTop: 16,
+    marginTop: 15,
   },
   textInput: {
     backgroundColor: '#F7F8FA',
@@ -417,10 +513,14 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   securityNote: {
-    color: '#888',
-    fontSize: 13,
-    marginTop: 16,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
     fontStyle: 'italic',
+    marginTop: 15,
+    marginBottom: 10,
+    lineHeight: 16,
+    paddingHorizontal: 10,
   },
   submitButton: {
     backgroundColor: '#ed7b0e',
@@ -433,7 +533,79 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: '600',
-  }
+  },
+  disabledButton: {
+    backgroundColor: '#cccccc',
+    opacity: 0.6,
+  },
+  loadingButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Enhanced security note styling
+  securityNote: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 15,
+    marginBottom: 10,
+    lineHeight: 16,
+    paddingHorizontal: 10,
+  },
+
+  // PIN locked status styling
+  pinLockedStatus: {
+    backgroundColor: '#fff3cd',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffc107',
+  },
+
+  pinLockedText: {
+    fontSize: 14,
+    color: '#856404',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+
+  // Card status with PIN lock indication
+  statusPinLocked: {
+    backgroundColor: '#ffc107',
+  },
+
+  textPinLocked: {
+    color: '#856404',
+  },
+
+  // Enhanced assign card modal
+  assignCardDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+
+  // PIN requirement notice
+  pinRequirementNotice: {
+    backgroundColor: '#e7f3ff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007bff',
+  },
+
+  pinRequirementText: {
+    fontSize: 13,
+    color: '#004085',
+    textAlign: 'center',
+  },
 });
 
 export default styles;

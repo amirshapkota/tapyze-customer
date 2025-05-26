@@ -1,41 +1,83 @@
 // app/services/cardService.js
 import authService from './authService';
 
-// Use the same BASE_URL as authService
-const BASE_URL = 'http://192.168.1.78:5000/api'; // Update this to match your authService BASE_URL
+// IMPORTANT: Use the same BASE_URL as your authService.js
+const BASE_URL = 'http://192.168.1.78:5000/api'; // Update this to match your backend URL
+// For iOS simulator: 'http://localhost:3000/api'
+// For physical device: 'http://192.168.1.XXX:3000/api'
 
 class CardService {
   constructor() {
     this.token = null;
   }
 
-  // Helper method to make API calls with auth token
+  // Helper method to make API calls with better error handling
   async apiCall(endpoint, options = {}) {
     const url = `${BASE_URL}${endpoint}`;
     
-    // Get current token
-    this.token = await authService.getToken();
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.token}`,
-        ...options.headers,
-      },
-      ...options,
-    };
-
     try {
+      // Get current token
+      this.token = await authService.getToken();
+      
+      if (!this.token) {
+        throw new Error('No authentication token found');
+      }
+
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.token}`,
+          ...options.headers,
+        },
+        ...options,
+      };
+
+      console.log('Making API call to:', url);
+      console.log('With config:', JSON.stringify(config, null, 2));
+
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      // Check if response is HTML (usually means 404 or server error)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        throw new Error(`Server returned HTML instead of JSON. Check if the endpoint ${endpoint} exists and your backend is running.`);
+      }
+
+      // Get response text first to debug
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        console.error('Response text:', responseText);
+        throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}...`);
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return data;
     } catch (error) {
       console.error('Card API Call Error:', error);
+      
+      // Network error handling
+      if (error.message.includes('Network request failed')) {
+        throw new Error('Network error. Please check your internet connection and ensure the backend server is running.');
+      }
+      
+      // CORS error handling
+      if (error.message.includes('CORS')) {
+        throw new Error('CORS error. Please check your backend CORS configuration.');
+      }
+      
       throw error;
     }
   }
@@ -43,15 +85,23 @@ class CardService {
   // Get customer's cards
   async getCustomerCards() {
     try {
-      const response = await this.apiCall('/device/cards');
+      console.log('Getting customer cards...');
+      const response = await this.apiCall('/devices/cards');  // Changed from /device/cards to /devices/cards
       
       if (response.status === 'success') {
+        console.log('Cards retrieved successfully:', response.data);
         return {
           success: true,
-          cards: response.data.cards
+          cards: response.data.cards || []
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to get cards'
         };
       }
     } catch (error) {
+      console.error('Error in getCustomerCards:', error);
       return {
         success: false,
         message: error.message || 'Failed to get cards'
@@ -59,22 +109,30 @@ class CardService {
     }
   }
 
-  // Assign card to customer
-  async assignCardToCustomer(cardUid) {
+  // Assign card to customer with PIN
+  async assignCardToCustomer(cardUid, pin) {
     try {
-      const response = await this.apiCall('/device/cards/assign', {
+      console.log('Assigning card with UID:', cardUid, 'and PIN');
+      const response = await this.apiCall('/devices/cards/assign', {
         method: 'POST',
-        body: JSON.stringify({ cardUid }),
+        body: JSON.stringify({ cardUid, pin }),
       });
 
       if (response.status === 'success') {
+        console.log('Card assigned successfully:', response.data);
         return {
           success: true,
           card: response.data.card,
           message: response.message
         };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to assign card'
+        };
       }
     } catch (error) {
+      console.error('Error in assignCardToCustomer:', error);
       return {
         success: false,
         message: error.message || 'Failed to assign card'
@@ -82,22 +140,92 @@ class CardService {
     }
   }
 
-  // Deactivate card
+  // Change card PIN
+  async changeCardPin(cardId, currentPin, newPin) {
+    try {
+      console.log('Changing PIN for card:', cardId);
+      const response = await this.apiCall(`/devices/cards/${cardId}/change-pin`, {
+        method: 'PATCH',
+        body: JSON.stringify({ currentPin, newPin }),
+      });
+
+      if (response.status === 'success') {
+        console.log('PIN changed successfully');
+        return {
+          success: true,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to change PIN'
+        };
+      }
+    } catch (error) {
+      console.error('Error in changeCardPin:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to change PIN'
+      };
+    }
+  }
+
+  // Verify card PIN
+  async verifyCardPin(cardUid, pin) {
+    try {
+      console.log('Verifying PIN for card:', cardUid);
+      const response = await this.apiCall('/devices/cards/verify-pin', {
+        method: 'POST',
+        body: JSON.stringify({ cardUid, pin }),
+      });
+
+      if (response.status === 'success') {
+        console.log('PIN verified successfully');
+        return {
+          success: true,
+          data: response.data,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Invalid PIN',
+          data: response.data || {}
+        };
+      }
+    } catch (error) {
+      console.error('Error in verifyCardPin:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to verify PIN'
+      };
+    }
+  }
+
+  // Deactivate card (for lock/report lost)
   async deactivateCard(cardId, reason = 'INACTIVE') {
     try {
-      const response = await this.apiCall(`/device/cards/${cardId}/deactivate`, {
+      console.log('Deactivating card:', cardId, 'Reason:', reason);
+      const response = await this.apiCall(`/devices/cards/${cardId}/deactivate`, {  // Changed from /device/cards/ to /devices/cards/
         method: 'PATCH',
         body: JSON.stringify({ reason }),
       });
 
       if (response.status === 'success') {
+        console.log('Card deactivated successfully:', response.data);
         return {
           success: true,
           card: response.data.card,
           message: response.message
         };
+      } else {
+        return {
+          success: false,
+          message: response.message || 'Failed to deactivate card'
+        };
       }
     } catch (error) {
+      console.error('Error in deactivateCard:', error);
       return {
         success: false,
         message: error.message || 'Failed to deactivate card'
@@ -105,21 +233,47 @@ class CardService {
     }
   }
 
-  // Format card number for display
-  formatCardNumber(cardUid) {
-    if (!cardUid) return '•••• •••• •••• ••••';
-    
-    // For RFID cards, we'll format the UID differently
-    // If UID is long, show last 4 digits
-    if (cardUid.length > 4) {
-      return `•••• •••• •••• ${cardUid.slice(-4)}`;
+  // Test connection to backend
+  async testConnection() {
+    try {
+      console.log('Testing connection to backend...');
+      
+      // Try to get wallet balance first (we know this works)
+      const testResponse = await fetch(`${BASE_URL}/wallet/balance`, {
+        headers: {
+          'Authorization': `Bearer ${await authService.getToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Test response status:', testResponse.status);
+      
+      if (testResponse.ok) {
+        console.log('Backend connection successful');
+        return { success: true, message: 'Backend connection successful' };
+      } else {
+        const errorText = await testResponse.text();
+        console.log('Test response error:', errorText);
+        return { success: false, message: `Backend responded with status ${testResponse.status}` };
+      }
+    } catch (error) {
+      console.error('Backend connection test failed:', error);
+      return { success: false, message: `Connection failed: ${error.message}` };
     }
-    return `•••• •••• •••• ${cardUid}`;
+  }
+
+  // Format card number for display (based on your existing format)
+  formatCardNumber(cardUid) {
+    if (!cardUid) return '•••• •••• •••• 4327';
+    
+    // Keep your existing format, just use last 4 digits of cardUid
+    const lastFour = cardUid.toString().slice(-4);
+    return `•••• •••• •••• ${lastFour}`;
   }
 
   // Format expiry date
   formatExpiryDate(expiryDate) {
-    if (!expiryDate) return '••/••';
+    if (!expiryDate) return '04/28';
     
     const date = new Date(expiryDate);
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -127,99 +281,37 @@ class CardService {
     return `${month}/${year}`;
   }
 
-  // Get card status info
-  getCardStatusInfo(card) {
-    if (!card) {
-      return {
-        status: 'No Card',
-        color: '#999',
-        isActive: false
-      };
-    }
-
-    const now = new Date();
-    const expiry = new Date(card.expiryDate);
-    
-    if (expiry < now) {
-      return {
-        status: 'Expired',
-        color: '#dc3545',
-        isActive: false
-      };
-    }
-
-    switch (card.status) {
-      case 'ACTIVE':
-        return {
-          status: card.isActive ? 'Active' : 'Inactive',
-          color: card.isActive ? '#28a745' : '#6c757d',
-          isActive: card.isActive
-        };
-      case 'LOST':
-        return {
-          status: 'Lost',
-          color: '#dc3545',
-          isActive: false
-        };
-      case 'PENDING_ACTIVATION':
-        return {
-          status: 'Pending Activation',
-          color: '#ffc107',
-          isActive: false
-        };
-      default:
-        return {
-          status: 'Inactive',
-          color: '#6c757d',
-          isActive: false
-        };
-    }
-  }
-
-  // Check if card is locked (inactive or lost)
+  // Check if card is locked based on status (updated for PIN lock)
   isCardLocked(card) {
     if (!card) return true;
     
-    const statusInfo = this.getCardStatusInfo(card);
-    return !statusInfo.isActive;
+    // Card is locked if it's not active, status is not ACTIVE, or PIN is locked
+    return !card.isActive || !['ACTIVE', 'PENDING_ACTIVATION'].includes(card.status);
   }
 
-  // Generate mock recent transactions for the card
-  generateRecentTransactions(card) {
-    if (!card || !card.isActive) {
-      return [];
-    }
+  // Get card status display text (updated for PIN lock)
+  getCardStatus(card) {
+    if (!card) return 'No Card';
+    
+    if (card.status === 'LOST') return 'Lost';
+    if (card.status === 'EXPIRED') return 'Expired';
+    if (card.status === 'PENDING_ACTIVATION') return 'Pending';
+    if (card.status === 'PIN_LOCKED') return 'PIN Locked';
+    if (!card.isActive) return 'Locked';
+    
+    return 'Active';
+  }
 
-    // Mock transactions - in real app, these would come from transaction API
-    return [
-      { 
-        id: '1', 
-        title: 'Coffee Shop', 
-        amount: -4.50, 
-        date: new Date().toISOString().split('T')[0], 
-        time: '09:34 AM', 
-        location: 'Local',
-        cardUid: card.cardUid
-      },
-      { 
-        id: '2', 
-        title: 'Grocery Store', 
-        amount: -65.43, 
-        date: new Date(Date.now() - 86400000).toISOString().split('T')[0], 
-        time: '02:15 PM', 
-        location: 'Local',
-        cardUid: card.cardUid
-      },
-      { 
-        id: '3', 
-        title: 'Gas Station', 
-        amount: -35.50, 
-        date: new Date(Date.now() - 172800000).toISOString().split('T')[0], 
-        time: '11:20 AM', 
-        location: 'Local',
-        cardUid: card.cardUid
-      },
-    ];
+  // Check if PIN change is required
+  requiresPinChange(card) {
+    return card && card.requiresPinChange;
+  }
+
+  // Validate PIN format
+  validatePin(pin) {
+    if (!pin) return { valid: false, message: 'PIN is required' };
+    if (!/^\d{4,6}$/.test(pin)) return { valid: false, message: 'PIN must be 4-6 digits' };
+    return { valid: true };
   }
 }
 
