@@ -161,6 +161,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  genderOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  genderOptionSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#F0F8FF',
+  },
+  genderOptionText: {
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  genderOptionTextSelected: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  
+  // Save button disabled state
+  saveButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.7,
+  },
+  
+  // Required fields note
+  requiredNote: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 16,
+    fontStyle: 'italic',
+  },
+  
+  // Helper text style enhancement
+  helperText: {
+    fontSize: 12,
+    color: '#999999',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  
+  // Disabled input container
+  disabledInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  
+  // Disabled text
+  disabledText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#666666',
+    marginLeft: 10,
+  },
+
 });
 
 export default styles;
