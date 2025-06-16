@@ -1,10 +1,6 @@
-// app/services/cardService.js
 import authService from './authService';
 
-// IMPORTANT: Use the same BASE_URL as your authService.js
-const BASE_URL = 'http://192.168.1.78:5000/api'; // Update this to match your backend URL
-// For iOS simulator: 'http://localhost:3000/api'
-// For physical device: 'http://192.168.1.XXX:3000/api'
+const BASE_URL = 'http://192.168.1.78:5000/api';
 
 class CardService {
   constructor() {

@@ -1,6 +1,5 @@
 import authService from './authService';
 
-// Use the same BASE_URL as authService
 const BASE_URL = 'http://192.168.1.78:5000/api';
 
 class WalletService {

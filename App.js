@@ -48,6 +48,11 @@ const SettingsStackNavigator = () => {
         component={ChangePasswordScreen} 
         options={{ headerShown: false }}
       />
+      <SettingsStack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen} 
+        options={{ headerShown: false }}
+      />
     </SettingsStack.Navigator>
   );
 };
