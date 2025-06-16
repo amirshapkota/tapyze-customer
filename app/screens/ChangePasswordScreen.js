@@ -6,7 +6,7 @@ import authService from '../services/authService';
 import styles from '../styles/ChangePasswordScreenStyles';
 
 const ChangePasswordScreen = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   // State for password fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -150,15 +150,22 @@ const ChangePasswordScreen = ({ navigation }) => {
   const handleForgotPassword = () => {
     Alert.alert(
       "Reset Password",
-      "You will be logged out and redirected to the password reset screen. Continue?",
+      "You will be logged out and continue to password reset screen. Continue?",
       [
         { text: "Cancel", style: "cancel" },
         { 
           text: "Continue", 
-          onPress: () => {
-            // Navigate to forgot password screen
-            // You might want to logout the user first
-            navigation.navigate('ForgotPassword');
+          onPress: async () => {
+            try {
+              const logoutResult = await logout();
+              if (logoutResult.success) {
+                navigation.navigate('ForgotPassword');
+              } else {
+                Alert.alert("Error", "Failed to logout. Please try again.");
+              }
+            } catch (error) {
+              Alert.alert("Error", "An error occurred while logging out.");
+            }
           }
         }
       ]
