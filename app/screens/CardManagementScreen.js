@@ -16,8 +16,6 @@ const CardManagementScreen = ({ navigation }) => {
   const [isLoadingCard, setIsLoadingCard] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isCardLocked, setIsCardLocked] = useState(false);
-  const [contactlessEnabled, setContactlessEnabled] = useState(true);
-  const [onlinePaymentsEnabled, setOnlinePaymentsEnabled] = useState(true);
   const [internationalEnabled, setInternationalEnabled] = useState(false);
   const [atmWithdrawalsEnabled, setAtmWithdrawalsEnabled] = useState(true);
   
@@ -618,44 +616,6 @@ const CardManagementScreen = ({ navigation }) => {
             <Ionicons name="key-outline" size={24} color="#FFFFFF" />
             <Text style={styles.quickActionText}>Reset PIN</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Card Settings */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Card Settings</Text>
-        </View>
-        
-        <View style={styles.settingsContainer}>
-          <View style={styles.settingsItem}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="radio-outline" size={24} color="#ed7b0e" />
-              <Text style={styles.settingLabel}>Contactless Payments</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#D1D1D6", true: "rgba(237, 123, 14, 0.3)" }}
-              thumbColor={contactlessEnabled ? "#ed7b0e" : "#f4f3f4"}
-              ios_backgroundColor="#D1D1D6"
-              onValueChange={setContactlessEnabled}
-              value={contactlessEnabled}
-              disabled={isCardLocked}
-            />
-          </View>
-          
-          <View style={styles.settingsItem}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="globe-outline" size={24} color="#ed7b0e" />
-              <Text style={styles.settingLabel}>Online Payments</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#D1D1D6", true: "rgba(237, 123, 14, 0.3)" }}
-              thumbColor={onlinePaymentsEnabled ? "#ed7b0e" : "#f4f3f4"}
-              ios_backgroundColor="#D1D1D6"
-              onValueChange={setOnlinePaymentsEnabled}
-              value={onlinePaymentsEnabled}
-              disabled={isCardLocked}
-            />
-          </View>
-          
         </View>
 
         {/* Recent Transactions - Real data from wallet API */}
