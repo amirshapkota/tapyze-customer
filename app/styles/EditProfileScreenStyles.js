@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   genderOptionSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#F0F8FF',
+    borderColor: '#ed7b0e',
+    backgroundColor: '##ffffff',
   },
   genderOptionText: {
     fontSize: 14,
@@ -187,17 +187,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   genderOptionTextSelected: {
-    color: '#007AFF',
+    color: '#ed7b0e',
     fontWeight: '600',
   },
-  
-  // Save button disabled state
-  saveButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-    opacity: 0.7,
-  },
-  
-  // Required fields note
   requiredNote: {
     fontSize: 12,
     color: '#666666',
@@ -205,35 +197,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontStyle: 'italic',
   },
-  
-  // Helper text style enhancement
-  helperText: {
-    fontSize: 12,
-    color: '#999999',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  
-  // Disabled input container
-  disabledInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  
-  // Disabled text
-  disabledText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#666666',
-    marginLeft: 10,
-  },
-
 });
 
 export default styles;

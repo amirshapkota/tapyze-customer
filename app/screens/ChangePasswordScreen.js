@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import authService from '../services/authService';
 import styles from '../styles/ChangePasswordScreenStyles';
 
 const ChangePasswordScreen = ({ navigation }) => {
+  const { user } = useAuth();
+  
   // State for password fields
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -31,53 +35,99 @@ const ChangePasswordScreen = ({ navigation }) => {
   
   const passwordStrength = checkPasswordStrength(newPassword);
 
-  // Handle password change
-  const handleChangePassword = () => {
-    // Validation
-    if (!currentPassword) {
+  // Validate all inputs
+  const validateInputs = () => {
+    if (!currentPassword.trim()) {
       Alert.alert("Error", "Please enter your current password");
-      return;
+      return false;
     }
     
-    if (!newPassword) {
+    if (!newPassword.trim()) {
       Alert.alert("Error", "Please enter a new password");
-      return;
+      return false;
     }
     
-    if (newPassword.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters long");
-      return;
+    if (newPassword.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters long");
+      return false;
     }
     
-    if (passwordStrength.score < 3) {
-      Alert.alert("Weak Password", "Please create a stronger password with a mix of uppercase, lowercase, numbers, and special characters");
-      return;
+    if (passwordStrength.score < 2) {
+      Alert.alert(
+        "Weak Password", 
+        "Please create a stronger password. Use a mix of uppercase, lowercase, numbers, and special characters"
+      );
+      return false;
+    }
+    
+    if (!confirmPassword.trim()) {
+      Alert.alert("Error", "Please confirm your new password");
+      return false;
     }
     
     if (newPassword !== confirmPassword) {
       Alert.alert("Error", "New passwords don't match");
-      return;
+      return false;
     }
     
     if (currentPassword === newPassword) {
       Alert.alert("Error", "New password must be different from current password");
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    if (!validateInputs()) {
       return;
     }
     
-    // Show loading
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Handle success (in real app, would update password via API)
+    try {
+      // Prepare the request data
+      const changePasswordData = {
+        currentPassword: currentPassword.trim(),
+        newPassword: newPassword.trim(),
+        confirmNewPassword: confirmPassword.trim()
+      };
+
+      // Use customer change password endpoint
+      const response = await authService.apiCall('/auth/customer/change-password', {
+        method: 'PATCH',
+        body: JSON.stringify(changePasswordData),
+      });
+
+      if (response.status === 'success') {
+        // Clear form
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        
+        Alert.alert(
+          "Success",
+          response.message || "Your password has been updated successfully",
+          [
+            { 
+              text: "OK", 
+              onPress: () => {
+                // Navigate back to profile or settings
+                navigation.goBack();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
       Alert.alert(
-        "Success",
-        "Your password has been updated successfully",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
+        "Error", 
+        error.message || "Failed to update password. Please try again."
       );
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle go back
@@ -94,6 +144,38 @@ const ChangePasswordScreen = ({ navigation }) => {
     } else {
       navigation.goBack();
     }
+  };
+
+  // Handle forgot password navigation
+  const handleForgotPassword = () => {
+    Alert.alert(
+      "Reset Password",
+      "You will be logged out and redirected to the password reset screen. Continue?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Continue", 
+          onPress: () => {
+            // Navigate to forgot password screen
+            // You might want to logout the user first
+            navigation.navigate('ForgotPassword');
+          }
+        }
+      ]
+    );
+  };
+
+  // Check if form has valid data for submission
+  const isFormValid = () => {
+    return (
+      currentPassword.trim() &&
+      newPassword.trim() &&
+      confirmPassword.trim() &&
+      newPassword === confirmPassword &&
+      newPassword.length >= 6 &&
+      currentPassword !== newPassword &&
+      passwordStrength.score >= 2
+    );
   };
 
   return (
@@ -121,7 +203,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           {/* Title Section */}
           <View style={styles.titleSection}>
             <Text style={styles.screenTitle}>Change Password</Text>
-            <Text style={styles.screenSubtitle}>Create a strong password to secure your account</Text>
+            <Text style={styles.screenSubtitle}>Update your password to keep your account secure</Text>
           </View>
 
           {/* Security Icon */}
@@ -134,7 +216,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           {/* Form Section */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Current Password</Text>
+              <Text style={styles.inputLabel}>Current Password *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="key-outline" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
@@ -144,6 +226,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   placeholder="Enter your current password"
                   placeholderTextColor="#999"
                   secureTextEntry={!showCurrentPassword}
+                  autoCapitalize="none"
                 />
                 <TouchableOpacity 
                   onPress={() => setShowCurrentPassword(!showCurrentPassword)}
@@ -159,7 +242,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>New Password</Text>
+              <Text style={styles.inputLabel}>New Password *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
@@ -169,6 +252,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   placeholder="Enter your new password"
                   placeholderTextColor="#999"
                   secureTextEntry={!showNewPassword}
+                  autoCapitalize="none"
                 />
                 <TouchableOpacity 
                   onPress={() => setShowNewPassword(!showNewPassword)}
@@ -200,12 +284,12 @@ const ChangePasswordScreen = ({ navigation }) => {
               ) : null}
               
               <Text style={styles.helperText}>
-                Use at least 8 characters with a mix of uppercase, lowercase, numbers, and special characters
+                Use at least 6 characters with a mix of uppercase, lowercase, numbers, and special characters
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Confirm New Password</Text>
+              <Text style={styles.inputLabel}>Confirm New Password *</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
@@ -215,6 +299,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   placeholder="Confirm your new password"
                   placeholderTextColor="#999"
                   secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
                 />
                 <TouchableOpacity 
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -230,6 +315,9 @@ const ChangePasswordScreen = ({ navigation }) => {
               {confirmPassword && newPassword && confirmPassword !== newPassword && (
                 <Text style={styles.errorText}>Passwords don't match</Text>
               )}
+              {confirmPassword && newPassword && confirmPassword === newPassword && (
+                <Text style={styles.successText}>✓ Passwords match</Text>
+              )}
             </View>
           </View>
 
@@ -237,10 +325,10 @@ const ChangePasswordScreen = ({ navigation }) => {
           <TouchableOpacity 
             style={[
               styles.updateButton,
-              isLoading ? styles.updateButtonDisabled : {}
+              (!isFormValid() || isLoading) ? styles.updateButtonDisabled : {}
             ]}
             onPress={handleChangePassword}
-            disabled={isLoading}
+            disabled={!isFormValid() || isLoading}
           >
             {isLoading ? (
               <Text style={styles.updateButtonText}>Updating...</Text>
@@ -250,11 +338,17 @@ const ChangePasswordScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => navigation.navigate('ForgotPassword')} >
+          <TouchableOpacity 
+            style={styles.forgotPasswordContainer} 
+            onPress={handleForgotPassword}
+          >
             <Text style={styles.forgotPasswordText}>
               Forgot your current password?
             </Text>
           </TouchableOpacity>
+
+          {/* Required fields note */}
+          <Text style={styles.requiredNote}>* Required fields</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

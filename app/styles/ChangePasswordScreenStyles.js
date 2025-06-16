@@ -145,6 +145,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginLeft: 2,
   },
+  successText: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 8,
+    marginLeft: 2,
+  },
   updateButton: {
     backgroundColor: '#ed7b0e',
     borderRadius: 12,
@@ -179,6 +185,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+   requiredNote: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 16,
+    fontStyle: 'italic',
+  },
+  
 });
 
 export default styles;
