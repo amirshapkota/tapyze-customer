@@ -150,16 +150,18 @@ const ChangePasswordScreen = ({ navigation }) => {
   const handleForgotPassword = () => {
     Alert.alert(
       "Reset Password",
-      "You will be logged out and continue to password reset screen. Continue?",
+      "You will be logged out and redirected to the password reset screen. Continue?",
       [
         { text: "Cancel", style: "cancel" },
         { 
           text: "Continue", 
           onPress: async () => {
             try {
+              // Logout the user
               const logoutResult = await logout();
+              
               if (logoutResult.success) {
-                navigation.navigate('ForgotPassword');
+                
               } else {
                 Alert.alert("Error", "Failed to logout. Please try again.");
               }

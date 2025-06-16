@@ -220,14 +220,12 @@ const ForgotPasswordScreen = () => {
           [{ 
             text: "Login", 
             onPress: () => {
-              // Navigate to login screen
-              navigation.navigate('AuthScreen');
+              navigation.navigate('Auth');
             }
           }]
         );
       }
     } catch (error) {
-      // Since code verification is done separately, most errors here should be password-related
       if (error.message.includes('invalid') || 
           error.message.includes('expired') || 
           error.message.toLowerCase().includes('code')) {
