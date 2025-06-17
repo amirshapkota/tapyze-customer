@@ -4,6 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 // Import the AuthProvider and useAuth hook
 import { AuthProvider, useAuth } from './app/context/AuthContext';
@@ -108,7 +110,7 @@ const StatementsStackNavigator = () => {
   );
 };
 
-// Bottom tab navigator
+// Bottom tab navigator with Android fixes
 const TabNavigator = () => {
   return (
     <Tab.Navigator
@@ -137,7 +139,7 @@ const TabNavigator = () => {
         },
         tabBarStyle: {
           backgroundColor: 'white',
-          paddingVertical: 12,
+          paddingVertical: Platform.OS === 'android' ? 8 : 12,
           paddingHorizontal: 15,
           borderTopWidth: 1,
           borderTopColor: '#F0F0F0',
@@ -149,6 +151,13 @@ const TabNavigator = () => {
           shadowOpacity: 0.05,
           shadowRadius: 5,
           elevation: 5,
+          height: Platform.OS === 'android' ? 70 : 'auto',
+          paddingBottom: Platform.OS === 'android' ? 10 : 20,
+          paddingTop: Platform.OS === 'android' ? 5 : 12,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
         headerShown: false
       })}
@@ -213,12 +222,13 @@ const AppContent = () => {
   );
 };
 
-// Main App Component
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
