@@ -194,7 +194,7 @@ const SendReceiveScreen = ({ navigation }) => {
 
       {/* Send Type Selection */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Payment Type</Text>
+        <Text style={styles.sectionTitle}>Send To</Text>
         <View style={styles.sendTypeContainer}>
           <TouchableOpacity 
             style={[styles.sendTypeButton, sendType === 'user' && styles.activeSendType]}
@@ -206,7 +206,7 @@ const SendReceiveScreen = ({ navigation }) => {
               color={sendType === 'user' ? '#FFFFFF' : '#666'} 
             />
             <Text style={[styles.sendTypeText, sendType === 'user' && styles.activeSendTypeText]}>
-              Personal
+               Person
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -453,17 +453,23 @@ const SendReceiveScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Send & Receive</Text>
-        <View style={styles.headerRight} />
-      </View>
+      {/* Header Section */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandName}>TAPYZE</Text>
+          </View>
+        </View>
+
+        {/* Title Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.screenTitle}>Send or Receive</Text>
+          <Text style={styles.screenSubtitle}>Manage your money transfers</Text>
+        </View>
 
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>

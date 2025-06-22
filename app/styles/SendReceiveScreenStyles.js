@@ -7,32 +7,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FB',
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8EAED',
+    paddingVertical: 15,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FB',
-    justifyContent: 'center',
+  logoContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1D29',
+  logoImage: {
+    height: 45,
+    width: 45,
   },
-  headerRight: {
-    width: 40,
+  brandName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginLeft: 8,
+  },
+  titleSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  screenTitle: {
+    fontSize: 28,
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
 
   // Tab Navigation
