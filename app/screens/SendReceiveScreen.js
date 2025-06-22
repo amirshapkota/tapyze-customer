@@ -463,6 +463,9 @@ const SendReceiveScreen = ({ navigation }) => {
             />
             <Text style={styles.brandName}>TAPYZE</Text>
           </View>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="close" size={24} color="#333" />
+        </TouchableOpacity>
         </View>
 
         {/* Title Section */}

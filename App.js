@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 // Import the AuthProvider and useAuth hook
 import { AuthProvider, useAuth } from './app/context/AuthContext';
@@ -23,7 +24,7 @@ import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import DepositScreen from './app/screens/DepositScreen';
 import WithdrawScreen from './app/screens/WithdrawScreen';
 import LoadingScreen from './app/screens/LoadingScreen';
-import SendReceiveScreen from './app/screens/SendReceiveScreen'; // Add this import
+import SendReceiveScreen from './app/screens/SendReceiveScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -111,77 +112,77 @@ const StatementsStackNavigator = () => {
   );
 };
 
-// Bottom tab navigator with Android fixes
+// Bottom tab navigator with floating button
 const TabNavigator = () => {
+  const navigation = useNavigation();
+  
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Card') {
-            iconName = focused ? 'card' : 'card-outline';
-          } else if (route.name === 'Statements') {
-            iconName = focused ? 'document-text' : 'document-text-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          } else if (route.name === 'SendReceive') {
-            // Return the floating button style for SendReceive
-            return (
-              <View style={styles.floatingIcon}>
-                <Ionicons name="swap-horizontal" size={24} color="white" />
-              </View>
-            );
-          }
+            if (route.name === 'Home') {
+              iconName = focused ? 'home' : 'home-outline';
+            } else if (route.name === 'Card') {
+              iconName = focused ? 'card' : 'card-outline';
+            } else if (route.name === 'Statements') {
+              iconName = focused ? 'document-text' : 'document-text-outline';
+            } else if (route.name === 'Settings') {
+              iconName = focused ? 'settings' : 'settings-outline';
+            }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#ed7b0e',
-        tabBarInactiveTintColor: '#A0A0A0',
-        tabBarLabelStyle: {
-          fontSize: 13,
-          fontWeight: '500',
-          marginTop: 4,
-        },
-        tabBarStyle: {
-          backgroundColor: 'white',
-          paddingVertical: Platform.OS === 'android' ? 8 : 12,
-          paddingHorizontal: 15,
-          borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -2,
+            return <Ionicons name={iconName} size={size} color={color} />;
           },
-          shadowOpacity: 0.05,
-          shadowRadius: 5,
-          elevation: 5,
-          height: Platform.OS === 'android' ? 70 : 'auto',
-          paddingBottom: Platform.OS === 'android' ? 10 : 20,
-          paddingTop: Platform.OS === 'android' ? 5 : 12,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-        },
-        headerShown: false
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeStackNavigator} />
-      <Tab.Screen name="Card" component={CardStackNavigator} />
-      <Tab.Screen 
-        name="SendReceive" 
-        component={SendReceiveScreen}
-        options={{
-          tabBarLabel: () => null, // Hide the label
+          tabBarActiveTintColor: '#ed7b0e',
+          tabBarInactiveTintColor: '#A0A0A0',
+          tabBarLabelStyle: {
+            fontSize: 13,
+            fontWeight: '500',
+            marginTop: 4,
+          },
+          tabBarStyle: {
+            backgroundColor: 'white',
+            paddingVertical: Platform.OS === 'android' ? 8 : 12,
+            paddingHorizontal: 15,
+            borderTopWidth: 1,
+            borderTopColor: '#F0F0F0',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 5,
+            elevation: 5,
+            height: Platform.OS === 'android' ? 70 : 'auto',
+            paddingBottom: Platform.OS === 'android' ? 10 : 20,
+            paddingTop: Platform.OS === 'android' ? 5 : 12,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+          },
+          headerShown: false
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeStackNavigator} />
+        <Tab.Screen name="Card" component={CardStackNavigator} />
+        <Tab.Screen name="Statements" component={StatementsStackNavigator} />
+        <Tab.Screen name="Settings" component={SettingsStackNavigator} />
+      </Tab.Navigator>
+      
+      {/* Floating Action Button positioned at bottom right */}
+      <TouchableOpacity 
+        style={styles.floatingButton}
+        onPress={() => {
+          navigation.navigate('SendReceive');
         }}
-      />
-      <Tab.Screen name="Statements" component={StatementsStackNavigator} />
-      <Tab.Screen name="Settings" component={SettingsStackNavigator} />
-    </Tab.Navigator>
+      >
+        <Ionicons name="swap-horizontal" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -217,6 +218,14 @@ const MainAppNavigator = () => {
         component={TabNavigator}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="SendReceive"
+        component={SendReceiveScreen}
+        options={{ 
+          headerShown: false,
+          presentation: 'modal',
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -247,27 +256,30 @@ function App() {
   );
 }
 
-// Styles for the floating icon
+// Styles for the floating button
 const styles = StyleSheet.create({
-  floatingIcon: {
+  floatingButton: {
+    position: 'absolute',
+    bottom: Platform.OS === 'android' ? 90 : 100,
+    right: 20,
     width: 72,
     height: 60,
-    borderRadius: 24,
+    borderRadius: 30,
     backgroundColor: '#ed7b0e',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Platform.OS === 'android' ? -25 : -30,
     // Enhanced shadow for Android
-    elevation: 12,
+    elevation: 8,
     // Enhanced shadow for iOS
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4,
     },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     borderWidth: 0,
+    zIndex: 1000,
   },
 });
 
