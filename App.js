@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { Platform, View, TouchableOpacity, StyleSheet } from 'react-native';
 
 // Import the AuthProvider and useAuth hook
 import { AuthProvider, useAuth } from './app/context/AuthContext';
@@ -23,6 +23,7 @@ import ForgotPasswordScreen from './app/screens/ForgotPasswordScreen';
 import DepositScreen from './app/screens/DepositScreen';
 import WithdrawScreen from './app/screens/WithdrawScreen';
 import LoadingScreen from './app/screens/LoadingScreen';
+import SendReceiveScreen from './app/screens/SendReceiveScreen'; // Add this import
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -126,6 +127,13 @@ const TabNavigator = () => {
             iconName = focused ? 'document-text' : 'document-text-outline';
           } else if (route.name === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
+          } else if (route.name === 'SendReceive') {
+            // Return the floating button style for SendReceive
+            return (
+              <View style={styles.floatingIcon}>
+                <Ionicons name="swap-horizontal" size={24} color="white" />
+              </View>
+            );
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -164,6 +172,13 @@ const TabNavigator = () => {
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Card" component={CardStackNavigator} />
+      <Tab.Screen 
+        name="SendReceive" 
+        component={SendReceiveScreen}
+        options={{
+          tabBarLabel: () => null, // Hide the label
+        }}
+      />
       <Tab.Screen name="Statements" component={StatementsStackNavigator} />
       <Tab.Screen name="Settings" component={SettingsStackNavigator} />
     </Tab.Navigator>
@@ -231,5 +246,29 @@ function App() {
     </SafeAreaProvider>
   );
 }
+
+// Styles for the floating icon
+const styles = StyleSheet.create({
+  floatingIcon: {
+    width: 72,
+    height: 60,
+    borderRadius: 24,
+    backgroundColor: '#ed7b0e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Platform.OS === 'android' ? -25 : -30,
+    // Enhanced shadow for Android
+    elevation: 12,
+    // Enhanced shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    borderWidth: 0,
+  },
+});
 
 export default App;
