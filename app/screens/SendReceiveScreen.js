@@ -1,7 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Image, Alert, ActivityIndicator, Modal } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  ScrollView, 
+  TextInput, 
+  Image, 
+  Alert, 
+  ActivityIndicator, 
+  Modal, 
+  StyleSheet 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import { Camera, CameraView } from 'expo-camera';
 import { useAuth } from '../context/AuthContext';
 import walletService from '../services/walletService';
 import styles from '../styles/SendReceiveScreenStyles';
@@ -21,12 +34,25 @@ const SendReceiveScreen = ({ navigation }) => {
   const [recipientLookupLoading, setRecipientLookupLoading] = useState(false);
   const [phoneValidationError, setPhoneValidationError] = useState('');
   const [transactionSuccess, setTransactionSuccess] = useState(null);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
   
   const quickAmounts = [500, 1000, 2000, 5000];
 
   useEffect(() => {
     loadUserBalance();
+    getCameraPermissions();
   }, []);
+
+  const getCameraPermissions = async () => {
+    try {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      setHasPermission(false);
+    }
+  };
 
   const loadUserBalance = async () => {
     try {
@@ -48,8 +74,7 @@ const SendReceiveScreen = ({ navigation }) => {
 
   const formatAmount = (value) => {
     if (!value) return '';
-    return value.replace(/\D/g, '')
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
   
   const handleAmountChange = (text) => {
@@ -151,7 +176,7 @@ const SendReceiveScreen = ({ navigation }) => {
 
     const cleanPhone = recipientPhone.replace(/^\+977-?/, '').replace(/\s+/g, '');
     if (cleanPhone.length < 10 || !cleanPhone.startsWith('9')) {
-      Alert.alert('Error', 'Please enter a valid phone number (should start with 9 and be 10 digits)');
+      Alert.alert('Error', 'Please enter a valid phone number');
       return false;
     }
 
@@ -171,12 +196,9 @@ const SendReceiveScreen = ({ navigation }) => {
     
     Alert.alert(
       'Confirm Payment',
-      `Send Rs. ${amount} to ${recipientUser?.name || recipientPhone}?\n\nRecipient: ${recipientUser?.name}\nPhone: ${walletService.formatPhoneNumber(recipientPhone)}\nType: ${recipientUser?.type === 'Merchant' ? 'Business' : 'Person'}`,
+      `Send Rs. ${amount} to ${recipientUser?.name || recipientPhone}?`,
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send',
           onPress: async () => {
@@ -220,26 +242,50 @@ const SendReceiveScreen = ({ navigation }) => {
     );
   };
 
-  const handleScanQR = () => {
-    setScannerModalVisible(true);
-    setTimeout(() => {
-      setScannerModalVisible(false);
-      Alert.alert('QR Scanned', 'Payment request detected!\nAmount: Rs. 500\nFrom: John Doe');
-    }, 2000);
-  };
+  const handleScanQR = async () => {
+  if (hasPermission === null) {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === 'granted');
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
+      return;
+    }
+  } else if (hasPermission === false) {
+    Alert.alert('Permission Denied', 'Please enable camera permission in settings');
+    return;
+  }
+
+  // Reset scanned state when opening scanner
+  setScanned(false);
+  setScannerModalVisible(true);
+};
+
+  const handleBarCodeScanned = ({ data }) => {
+  if (scanned) return;
+  
+  setScanned(true);
+  
+  // Close scanner modal immediately
+  setScannerModalVisible(false);
+  
+  const phoneNumber = data.trim();
+  const cleanPhone = phoneNumber.replace(/^\+977-?/, '').replace(/\s+/g, '');
+  
+  if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+    setRecipientPhone(cleanPhone);
+    // Remove the Alert popup - just set the phone number
+    // Alert.alert('QR Scanned!', `Phone number detected: ${cleanPhone}`);
+  } else {
+    Alert.alert('Invalid QR Code', 'Please scan a valid TAPYZE payment QR code.');
+  }
+};
 
   const generateQRData = () => {
-    return JSON.stringify({
-      type: 'tapyze_payment',
-      userId: user?.id,
-      userName: user?.fullName || user?.businessName,
-      userPhone: user?.phone,
-      userType: user?.type || 'Customer',
-      timestamp: Date.now()
-    });
+    return user?.phone || '';
   };
 
-  // Transaction Success UI
+  // Transaction Success Screen
   if (transactionSuccess) {
     return (
       <SafeAreaView style={styles.container}>
@@ -282,7 +328,7 @@ const SendReceiveScreen = ({ navigation }) => {
               
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Phone</Text>
-                <Text style={styles.detailValue}>{walletService.formatPhoneNumber(transactionSuccess.recipient.phone)}</Text>
+                <Text style={styles.detailValue}>{transactionSuccess.recipient.phone}</Text>
               </View>
               
               <View style={styles.detailRow}>
@@ -358,7 +404,7 @@ const SendReceiveScreen = ({ navigation }) => {
               color={sendType === 'user' ? '#FFFFFF' : '#666'} 
             />
             <Text style={[styles.sendTypeText, sendType === 'user' && styles.activeSendTypeText]}>
-               Person
+              Person
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -472,7 +518,7 @@ const SendReceiveScreen = ({ navigation }) => {
                 {recipientUser.type === 'Merchant' ? 'Business Account' : 'Personal Account'}
               </Text>
               <Text style={styles.recipientPhoneText}>
-                {walletService.formatPhoneNumber(recipientUser.phone)}
+                {recipientUser.phone}
               </Text>
             </View>
           </View>
@@ -531,24 +577,24 @@ const SendReceiveScreen = ({ navigation }) => {
         <View style={styles.qrCodeWrapper}>
           <QRCode
             value={generateQRData()}
-            size={180}
+            size={220}
             color="#000000"
             backgroundColor="#FFFFFF"
             logo={require('../assets/logo.png')}
-            logoSize={36}
+            logoSize={44}
             logoBackgroundColor="transparent"
-            logoMargin={2}
-            logoBorderRadius={8}
+            logoMargin={4}
+            logoBorderRadius={12}
             enableLinearGradient={false}
           />
         </View>
         
         <View style={styles.userInfoCard}>
           <Text style={styles.userName}>{user?.fullName || user?.businessName}</Text>
-          <Text style={styles.userPhone}>{walletService.formatPhoneNumber(user?.phone)}</Text>
+          <Text style={styles.userPhone}>{user?.phone}</Text>
           <View style={styles.userIdContainer}>
-            <Ionicons name="at" size={14} color="#ed7b0e" />
-            <Text style={styles.userId}>{user?.username || user?.email?.split('@')[0]}</Text>
+            <Ionicons name="shield-checkmark" size={14} color="#ed7b0e" />
+            <Text style={styles.userId}>Verified TAPYZE Account</Text>
           </View>
         </View>
         
@@ -681,33 +727,210 @@ const SendReceiveScreen = ({ navigation }) => {
 
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent={false}
         visible={scannerModalVisible}
-        onRequestClose={() => setScannerModalVisible(false)}
+        onRequestClose={() => {
+          setScannerModalVisible(false);
+          setScanned(false); // Reset scanned state when modal closes
+        }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Scan QR Code</Text>
+        <View style={cameraStyles.container}>
+          <View style={cameraStyles.header}>
+            <TouchableOpacity 
+              onPress={() => {
+                setScannerModalVisible(false);
+                setScanned(false); // Reset scanned state when manually closing
+              }}
+              style={cameraStyles.closeButton}
+            >
+              <Ionicons name="close" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={cameraStyles.headerTitle}>Scan QR Code</Text>
+            <View style={cameraStyles.placeholder} />
+          </View>
+
+          {hasPermission === false ? (
+            <View style={cameraStyles.permissionContainer}>
+              <Ionicons name="camera-off" size={64} color="#666" />
+              <Text style={cameraStyles.permissionText}>Camera permission denied</Text>
               <TouchableOpacity 
-                onPress={() => setScannerModalVisible(false)}
-                style={styles.modalCloseButton}
+                style={cameraStyles.permissionButton}
+                onPress={getCameraPermissions}
               >
-                <Ionicons name="close" size={24} color="#666" />
+                <Text style={cameraStyles.permissionButtonText}>Grant Permission</Text>
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.scannerContainer}>
-              <View style={styles.scannerPlaceholder}>
-                <ActivityIndicator size="large" color="#ed7b0e" />
-                <Text style={styles.scannerText}>Scanning QR Code...</Text>
-              </View>
+          ) : (
+            <CameraView
+              style={StyleSheet.absoluteFillObject}
+              facing="back"
+              onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              barcodeScannerSettings={{
+                barcodeTypes: ['qr'],
+              }}
+            />
+          )}
+
+          <View style={cameraStyles.overlay}>
+            <View style={cameraStyles.scannerFrame}>
+              <View style={cameraStyles.corner} />
+              <View style={[cameraStyles.corner, cameraStyles.topRight]} />
+              <View style={[cameraStyles.corner, cameraStyles.bottomLeft]} />
+              <View style={[cameraStyles.corner, cameraStyles.bottomRight]} />
             </View>
+          </View>
+
+          <View style={cameraStyles.instructionsContainer}>
+            <Text style={cameraStyles.instructionsTitle}>
+              Point camera at QR code
+            </Text>
+            <Text style={cameraStyles.instructionsText}>
+              Make sure the QR code is clearly visible
+            </Text>
+            
+            
           </View>
         </View>
       </Modal>
     </SafeAreaView>
   );
 };
+
+const cameraStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 10,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  placeholder: {
+    width: 44,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    paddingHorizontal: 40,
+  },
+  permissionText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  permissionButton: {
+    backgroundColor: '#ed7b0e',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  permissionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerFrame: {
+    width: 250,
+    height: 250,
+    position: 'relative',
+  },
+  corner: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderColor: '#ed7b0e',
+    borderWidth: 4,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    top: 0,
+    left: 0,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    left: 'auto',
+    borderLeftWidth: 0,
+    borderRightWidth: 4,
+    borderBottomWidth: 0,
+  },
+  bottomLeft: {
+    bottom: 0,
+    top: 'auto',
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    borderBottomWidth: 4,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    top: 'auto',
+    left: 'auto',
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+  },
+  instructionsContainer: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  instructionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: '#CCCCCC',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  scanAgainButton: {
+    marginTop: 20,
+    backgroundColor: 'rgba(237, 123, 14, 0.8)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  scanAgainText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
 
 export default SendReceiveScreen;
