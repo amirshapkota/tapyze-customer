@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Image, Alert, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
@@ -8,58 +8,119 @@ import styles from '../styles/SendReceiveScreenStyles';
 
 const SendReceiveScreen = ({ navigation }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('send'); // 'send' or 'receive'
+  const [activeTab, setActiveTab] = useState('send');
   const [amount, setAmount] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  const [recipientName, setRecipientName] = useState('');
+  const [recipientUser, setRecipientUser] = useState(null);
   const [note, setNote] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userBalance, setUserBalance] = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const [scannerModalVisible, setScannerModalVisible] = useState(false);
-  const [sendType, setSendType] = useState('user'); // 'user' or 'business'
+  const [sendType, setSendType] = useState('user');
+  const [recipientLookupLoading, setRecipientLookupLoading] = useState(false);
+  const [phoneValidationError, setPhoneValidationError] = useState('');
+  const [transactionSuccess, setTransactionSuccess] = useState(null);
   
-  // Quick amount options
   const quickAmounts = [500, 1000, 2000, 5000];
 
   useEffect(() => {
     loadUserBalance();
   }, []);
 
-  // Load user's current balance
   const loadUserBalance = async () => {
     try {
-      const balance = await walletService.getBalance();
-      setUserBalance(balance);
+      setBalanceLoading(true);
+      const result = await walletService.getWalletBalance();
+      if (result.success) {
+        setUserBalance(result.balance);
+      } else {
+        console.error('Failed to load balance:', result.message);
+        Alert.alert('Error', 'Failed to load wallet balance');
+      }
     } catch (error) {
       console.error('Error loading balance:', error);
+      Alert.alert('Error', 'Failed to load wallet balance');
+    } finally {
+      setBalanceLoading(false);
     }
   };
 
-  // Format the amount with commas
   const formatAmount = (value) => {
     if (!value) return '';
     return value.replace(/\D/g, '')
       .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
   
-  // Handle amount input
   const handleAmountChange = (text) => {
     const formattedAmount = formatAmount(text);
     setAmount(formattedAmount);
   };
   
-  // Handle quick amount selection
   const handleQuickAmount = (value) => {
     setAmount(formatAmount(value.toString()));
   };
 
-  // Validate phone number format
-  const validatePhoneNumber = (phone) => {
-    const phoneRegex = /^\+977-9[0-9]{9}$|^9[0-9]{9}$/;
-    return phoneRegex.test(phone);
+  const handlePhoneChange = (text) => {
+    setRecipientPhone(text);
   };
 
-  // Validate send transaction
+  const lookupRecipient = useCallback(async (phone) => {
+    if (!phone || phone.length < 10) {
+      setRecipientUser(null);
+      setPhoneValidationError('');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/^\+977-?/, '').replace(/\s+/g, '');
+    if (cleanPhone.length < 10 || !cleanPhone.startsWith('9')) {
+      setRecipientUser(null);
+      setPhoneValidationError('Phone number should start with 9 and be 10 digits');
+      return;
+    }
+
+    try {
+      setRecipientLookupLoading(true);
+      setPhoneValidationError('');
+      
+      const result = await walletService.findUserByPhone(phone);
+      
+      if (result.success) {
+        setRecipientUser(result.user);
+        
+        if (result.user.type === 'Merchant') {
+          setSendType('business');
+        } else {
+          setSendType('user');
+        }
+      } else {
+        setRecipientUser(null);
+        if (cleanPhone.length >= 10) {
+          setPhoneValidationError(result.message || 'User not found');
+        }
+      }
+    } catch (error) {
+      console.error('Recipient lookup error:', error);
+      setRecipientUser(null);
+      setPhoneValidationError('Error looking up recipient');
+    } finally {
+      setRecipientLookupLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (recipientPhone.trim()) {
+        lookupRecipient(recipientPhone.trim());
+      } else {
+        setRecipientUser(null);
+        setPhoneValidationError('');
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [recipientPhone, lookupRecipient]);
+
   const validateSendTransaction = () => {
     const numericAmount = parseFloat(amount.replace(/,/g, ''));
     
@@ -83,28 +144,34 @@ const SendReceiveScreen = ({ navigation }) => {
       return false;
     }
 
-    if (!recipientPhone) {
+    if (!recipientPhone.trim()) {
       Alert.alert('Error', 'Please enter recipient phone number');
       return false;
     }
 
-    if (!validatePhoneNumber(recipientPhone)) {
-      Alert.alert('Error', 'Please enter a valid phone number (+977-9XXXXXXXXX or 9XXXXXXXXX)');
+    const cleanPhone = recipientPhone.replace(/^\+977-?/, '').replace(/\s+/g, '');
+    if (cleanPhone.length < 10 || !cleanPhone.startsWith('9')) {
+      Alert.alert('Error', 'Please enter a valid phone number (should start with 9 and be 10 digits)');
+      return false;
+    }
+
+    if (!recipientUser) {
+      Alert.alert('Error', 'Recipient not found. Please check the phone number.');
       return false;
     }
     
     return true;
   };
 
-  // Handle send money
   const handleSendMoney = async () => {
     if (!validateSendTransaction()) return;
 
     const numericAmount = parseFloat(amount.replace(/,/g, ''));
+    const recipientType = recipientUser?.type === 'Merchant' ? 'BUSINESS' : 'USER';
     
     Alert.alert(
       'Confirm Payment',
-      `Send Rs. ${amount} to ${recipientName || recipientPhone}?`,
+      `Send Rs. ${amount} to ${recipientUser?.name || recipientPhone}?\n\nRecipient: ${recipientUser?.name}\nPhone: ${walletService.formatPhoneNumber(recipientPhone)}\nType: ${recipientUser?.type === 'Merchant' ? 'Business' : 'Person'}`,
       [
         {
           text: 'Cancel',
@@ -116,34 +183,28 @@ const SendReceiveScreen = ({ navigation }) => {
             setIsLoading(true);
             
             try {
-              const result = await walletService.sendMoney({
-                amount: numericAmount,
+              const result = await walletService.transferFunds(
                 recipientPhone,
-                note,
-                sendType
-              });
+                recipientType,
+                numericAmount,
+                note ? `Transfer to ${recipientUser?.name || recipientPhone} (${note})` : `Transfer to ${recipientUser?.name || recipientPhone}`
+              );
               
               if (result.success) {
-                Alert.alert(
-                  'Payment Sent!',
-                  `Rs. ${amount} has been sent successfully to ${recipientName || recipientPhone}!\n\nTransaction ID: ${result.transactionId}\nNew Balance: Rs. ${result.balance.toFixed(2)}`,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        // Reset form
-                        setAmount('');
-                        setRecipientPhone('');
-                        setRecipientName('');
-                        setNote('');
-                        loadUserBalance();
-                        
-                        // Navigate back to dashboard
-                        navigation.navigate('DashboardMain');
-                      }
-                    }
-                  ]
-                );
+                setTransactionSuccess({
+                  amount: amount,
+                  recipient: result.recipient || { name: recipientUser?.name, phone: recipientPhone },
+                  transaction: result.transaction,
+                  newBalance: result.senderBalance,
+                  timestamp: new Date()
+                });
+                
+                setAmount('');
+                setRecipientPhone('');
+                setRecipientUser(null);
+                setNote('');
+                setPhoneValidationError('');
+                loadUserBalance();
               } else {
                 Alert.alert('Payment Failed', result.message);
               }
@@ -159,46 +220,137 @@ const SendReceiveScreen = ({ navigation }) => {
     );
   };
 
-  // Handle QR scanner for sending money
   const handleScanQR = () => {
     setScannerModalVisible(true);
-    // In a real app, this would open camera scanner
     setTimeout(() => {
       setScannerModalVisible(false);
-      // Mock scanned data
       Alert.alert('QR Scanned', 'Payment request detected!\nAmount: Rs. 500\nFrom: John Doe');
     }, 2000);
   };
 
-  // Handle QR code generation for receiving money
   const generateQRData = () => {
     return JSON.stringify({
       type: 'tapyze_payment',
       userId: user?.id,
-      userName: user?.fullName,
+      userName: user?.fullName || user?.businessName,
       userPhone: user?.phone,
+      userType: user?.type || 'Customer',
       timestamp: Date.now()
     });
   };
 
+  // Transaction Success UI
+  if (transactionSuccess) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandName}>TAPYZE</Text>
+          </View>
+          <TouchableOpacity onPress={() => {
+            setTransactionSuccess(null);
+            navigation.goBack();
+          }}>
+            <Ionicons name="close" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.successContainer}>
+          <View style={styles.successCard}>
+            <View style={styles.successIcon}>
+              <Ionicons name="checkmark-circle" size={64} color="#28a745" />
+            </View>
+            
+            <Text style={styles.successTitle}>Payment Sent!</Text>
+            <Text style={styles.successSubtitle}>Your transaction was completed successfully</Text>
+            
+            <View style={styles.transactionDetails}>
+              <View style={styles.amountSection}>
+                <Text style={styles.amountLabel}>Amount Sent</Text>
+                <Text style={styles.amountValue}>Rs. {transactionSuccess.amount}</Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>To</Text>
+                <Text style={styles.detailValue}>{transactionSuccess.recipient.name}</Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Phone</Text>
+                <Text style={styles.detailValue}>{walletService.formatPhoneNumber(transactionSuccess.recipient.phone)}</Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Reference</Text>
+                <Text style={styles.detailValue}>{transactionSuccess.transaction?.reference || 'N/A'}</Text>
+              </View>
+              
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Date & Time</Text>
+                <Text style={styles.detailValue}>
+                  {transactionSuccess.timestamp.toLocaleDateString()} at {transactionSuccess.timestamp.toLocaleTimeString()}
+                </Text>
+              </View>
+              
+              <View style={styles.balanceSection}>
+                <Text style={styles.balanceLabel}>New Balance</Text>
+                <Text style={styles.balanceValue}>Rs. {transactionSuccess.newBalance.toLocaleString()}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.successActions}>
+              <TouchableOpacity 
+                style={styles.shareButton}
+                onPress={() => {
+                  Alert.alert('Share Receipt', 'Receipt sharing functionality will be implemented');
+                }}
+              >
+                <Ionicons name="share-outline" size={20} color="#ed7b0e" />
+                <Text style={styles.shareButtonText}>Share Receipt</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.doneButton}
+                onPress={() => {
+                  setTransactionSuccess(null);
+                  navigation.goBack();
+                }}
+              >
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const renderSendTab = () => (
     <View style={styles.tabContent}>
-      {/* Balance Card */}
       <View style={styles.balanceCard}>
         <View style={styles.balanceHeader}>
           <Ionicons name="wallet-outline" size={24} color="#ed7b0e" />
           <Text style={styles.balanceLabel}>Available Balance</Text>
         </View>
-        <Text style={styles.balanceAmount}>Rs. {userBalance.toLocaleString()}</Text>
+        {balanceLoading ? (
+          <ActivityIndicator size="small" color="#ed7b0e" />
+        ) : (
+          <Text style={styles.balanceAmount}>Rs. {userBalance.toLocaleString()}</Text>
+        )}
       </View>
 
-      {/* Send Type Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Send To</Text>
         <View style={styles.sendTypeContainer}>
           <TouchableOpacity 
             style={[styles.sendTypeButton, sendType === 'user' && styles.activeSendType]}
             onPress={() => setSendType('user')}
+            disabled={recipientUser?.type === 'Merchant'}
           >
             <Ionicons 
               name="person" 
@@ -212,6 +364,7 @@ const SendReceiveScreen = ({ navigation }) => {
           <TouchableOpacity 
             style={[styles.sendTypeButton, sendType === 'business' && styles.activeSendType]}
             onPress={() => setSendType('business')}
+            disabled={recipientUser?.type === 'Customer'}
           >
             <Ionicons 
               name="business" 
@@ -225,7 +378,6 @@ const SendReceiveScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Amount Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Amount</Text>
         <View style={styles.amountInputContainer}>
@@ -265,23 +417,25 @@ const SendReceiveScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Recipient Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
           {sendType === 'user' ? 'Send to' : 'Pay to'}
         </Text>
         <View style={styles.recipientInputContainer}>
           <Ionicons 
-            name={sendType === 'user' ? 'person' : 'business'} 
+            name="call" 
             size={20} 
             color="#666" 
             style={styles.inputIcon} 
           />
           <TextInput
-            style={styles.recipientInput}
+            style={[
+              styles.recipientInput,
+              phoneValidationError && !recipientUser && styles.errorInput
+            ]}
             value={recipientPhone}
-            onChangeText={setRecipientPhone}
-            placeholder={sendType === 'user' ? 'Phone number' : 'Business phone'}
+            onChangeText={handlePhoneChange}
+            placeholder="Phone number (9xxxxxxxxx)"
             placeholderTextColor="#CCCCCC"
             keyboardType="phone-pad"
             editable={!isLoading}
@@ -295,17 +449,36 @@ const SendReceiveScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {recipientName ? (
-          <View style={styles.recipientInfo}>
-            <Ionicons name="checkmark-circle" size={16} color="#28a745" />
-            <Text style={styles.recipientNameText}>
-              {recipientName} {sendType === 'business' ? '(Business)' : ''}
-            </Text>
+        {phoneValidationError && !recipientUser && (
+          <View style={styles.errorInfo}>
+            <Ionicons name="alert-circle" size={16} color="#dc3545" />
+            <Text style={styles.errorText}>{phoneValidationError}</Text>
           </View>
-        ) : null}
+        )}
+
+        {recipientLookupLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#ed7b0e" />
+            <Text style={styles.loadingText}>Looking up recipient...</Text>
+          </View>
+        )}
+
+        {recipientUser && !recipientLookupLoading && (
+          <View style={styles.recipientInfo}>
+            <Ionicons name="checkmark-circle" size={24} color="#28a745" />
+            <View style={styles.recipientDetails}>
+              <Text style={styles.recipientNameText}>{recipientUser.name}</Text>
+              <Text style={styles.recipientTypeText}>
+                {recipientUser.type === 'Merchant' ? 'Business Account' : 'Personal Account'}
+              </Text>
+              <Text style={styles.recipientPhoneText}>
+                {walletService.formatPhoneNumber(recipientUser.phone)}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* Note Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Note (Optional)</Text>
         <TextInput
@@ -316,16 +489,16 @@ const SendReceiveScreen = ({ navigation }) => {
           placeholderTextColor="#999999"
           multiline
           editable={!isLoading}
+          maxLength={200}
         />
       </View>
 
-      {/* Send Button */}
       <TouchableOpacity 
         style={[
           styles.sendButton,
-          (!amount || !recipientPhone || isLoading) && styles.disabledButton
+          (!amount || !recipientPhone || !recipientUser || isLoading || balanceLoading) && styles.disabledButton
         ]}
-        disabled={!amount || !recipientPhone || isLoading}
+        disabled={!amount || !recipientPhone || !recipientUser || isLoading || balanceLoading}
         onPress={handleSendMoney}
       >
         {isLoading ? (
@@ -349,7 +522,6 @@ const SendReceiveScreen = ({ navigation }) => {
 
   const renderReceiveTab = () => (
     <View style={styles.tabContent}>
-      {/* QR Code Card */}
       <View style={styles.qrCard}>
         <Text style={styles.qrTitle}>Your Payment QR</Text>
         <Text style={styles.qrSubtitle}>
@@ -372,8 +544,8 @@ const SendReceiveScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.userInfoCard}>
-          <Text style={styles.userName}>{user?.fullName}</Text>
-          <Text style={styles.userPhone}>{user?.phone}</Text>
+          <Text style={styles.userName}>{user?.fullName || user?.businessName}</Text>
+          <Text style={styles.userPhone}>{walletService.formatPhoneNumber(user?.phone)}</Text>
           <View style={styles.userIdContainer}>
             <Ionicons name="at" size={14} color="#ed7b0e" />
             <Text style={styles.userId}>{user?.username || user?.email?.split('@')[0]}</Text>
@@ -383,7 +555,7 @@ const SendReceiveScreen = ({ navigation }) => {
         <TouchableOpacity 
           style={styles.shareButton}
           onPress={() => {
-            Alert.alert('Share QR', 'QR code sharing functionality');
+            Alert.alert('Share QR', 'QR code sharing functionality will be implemented');
           }}
         >
           <Ionicons name="share" size={18} color="#ed7b0e" />
@@ -391,7 +563,6 @@ const SendReceiveScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Features Grid */}
       <View style={styles.featuresGrid}>
         <View style={styles.featureCard}>
           <View style={styles.featureIcon}>
@@ -426,7 +597,6 @@ const SendReceiveScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Payment Instructions */}
       <View style={styles.instructionsCard}>
         <Text style={styles.instructionsTitle}>How to Receive</Text>
         <View style={styles.instructionItem}>
@@ -453,28 +623,25 @@ const SendReceiveScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header Section */}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Image 
-              source={require('../assets/logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.brandName}>TAPYZE</Text>
-          </View>
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandName}>TAPYZE</Text>
+        </View>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="close" size={24} color="#333" />
+          <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
-        </View>
+      </View>
 
-        {/* Title Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.screenTitle}>Send or Receive</Text>
-          <Text style={styles.screenSubtitle}>Manage your money transfers</Text>
-        </View>
+      <View style={styles.titleSection}>
+        <Text style={styles.screenTitle}>Send or Receive</Text>
+        <Text style={styles.screenSubtitle}>Manage your money transfers</Text>
+      </View>
 
-      {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'send' && styles.activeTab]}
@@ -512,7 +679,6 @@ const SendReceiveScreen = ({ navigation }) => {
         {activeTab === 'send' ? renderSendTab() : renderReceiveTab()}
       </ScrollView>
 
-      {/* Scanner Modal */}
       <Modal
         animationType="slide"
         transparent={true}

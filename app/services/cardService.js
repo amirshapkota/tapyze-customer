@@ -1,6 +1,6 @@
 import authService from './authService';
 
-const BASE_URL = 'https://tapyze.onrender.com/api';
+const BASE_URL = 'http://192.168.1.78:5000/api';
 
 class CardService {
   constructor() {

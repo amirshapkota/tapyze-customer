@@ -1,6 +1,6 @@
 import authService from './authService';
 
-const BASE_URL = 'https://tapyze.onrender.com/api';
+const BASE_URL = 'http://192.168.1.78:5000/api';
 
 class WalletService {
   constructor() {
@@ -38,6 +38,35 @@ class WalletService {
     }
   }
 
+  // Find user by phone number
+  async findUserByPhone(phone) {
+    try {
+      if (!phone) {
+        return {
+          success: false,
+          message: 'Phone number is required'
+        };
+      }
+
+      // Clean the phone number
+      const cleanPhone = phone.replace(/^\+977-?/, '').replace(/\s+/g, '');
+      
+      const response = await this.apiCall(`/wallet/lookup/${cleanPhone}`);
+      
+      if (response.status === 'success') {
+        return {
+          success: true,
+          user: response.data.user
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'User not found'
+      };
+    }
+  }
+
   // Get wallet balance
   async getWalletBalance() {
     try {
@@ -61,6 +90,20 @@ class WalletService {
   // Top up wallet
   async topUpWallet(amount) {
     try {
+      if (!amount || amount <= 0) {
+        return {
+          success: false,
+          message: 'Please provide a valid amount'
+        };
+      }
+
+      if (amount < 10) {
+        return {
+          success: false,
+          message: 'Minimum top-up amount is Rs. 10'
+        };
+      }
+
       const response = await this.apiCall('/wallet/topup', {
         method: 'POST',
         body: JSON.stringify({ amount }),
@@ -82,13 +125,43 @@ class WalletService {
     }
   }
 
-  // Transfer funds
-  async transferFunds(recipientId, recipientType, amount, description) {
+  // Transfer funds using phone number
+  async transferFunds(recipientPhone, recipientType, amount, description) {
     try {
+      if (!amount || amount <= 0) {
+        return {
+          success: false,
+          message: 'Please provide a valid amount'
+        };
+      }
+
+      if (amount < 10) {
+        return {
+          success: false,
+          message: 'Minimum transfer amount is Rs. 10'
+        };
+      }
+
+      if (!recipientPhone) {
+        return {
+          success: false,
+          message: 'Recipient phone number is required'
+        };
+      }
+
+      // Validate phone format
+      const phoneRegex = /^\+977-?9[0-9]{9}$|^9[0-9]{9}$/;
+      if (!phoneRegex.test(recipientPhone)) {
+        return {
+          success: false,
+          message: 'Invalid phone number format'
+        };
+      }
+
       const response = await this.apiCall('/wallet/transfer', {
         method: 'POST',
         body: JSON.stringify({
-          recipientId,
+          recipientPhone,
           recipientType,
           amount,
           description
@@ -99,6 +172,7 @@ class WalletService {
         return {
           success: true,
           senderBalance: response.data.senderBalance,
+          recipient: response.data.recipient,
           transaction: response.data.transaction,
           message: response.message
         };
@@ -133,12 +207,12 @@ class WalletService {
 
   // Format transaction for display
   formatTransactionForDisplay(transaction) {
-    const isCredit = transaction.type === 'CREDIT';
+    const isCredit = transaction.type === 'CREDIT' || transaction.amount > 0;
     const amount = isCredit ? Math.abs(transaction.amount) : -Math.abs(transaction.amount);
     
     // Determine transaction type for UI
     let displayType = 'payment';
-    if (transaction.type === 'CREDIT') {
+    if (transaction.type === 'CREDIT' || transaction.amount > 0) {
       if (transaction.description.toLowerCase().includes('transfer')) {
         displayType = 'deposit';
       } else if (transaction.description.toLowerCase().includes('top-up')) {
@@ -146,7 +220,7 @@ class WalletService {
       } else {
         displayType = 'deposit';
       }
-    } else if (transaction.type === 'DEBIT') {
+    } else {
       if (transaction.description.toLowerCase().includes('transfer')) {
         displayType = 'payment';
       } else {
@@ -165,7 +239,7 @@ class WalletService {
     }
 
     // Calculate points (1 point per Rs. spent, only for debits)
-    const points = transaction.type === 'DEBIT' ? Math.floor(Math.abs(transaction.amount)) : 0;
+    const points = (transaction.type === 'DEBIT' || transaction.amount < 0) ? Math.floor(Math.abs(transaction.amount)) : 0;
 
     return {
       id: transaction._id,
@@ -176,7 +250,7 @@ class WalletService {
       category: category,
       points: points,
       reference: transaction.reference,
-      status: transaction.status,
+      status: transaction.status || 'COMPLETED',
       metadata: transaction.metadata
     };
   }
@@ -225,6 +299,31 @@ class WalletService {
         message: error.message || 'Failed to get transactions'
       };
     }
+  }
+
+  // Validate phone number format
+  validatePhoneNumber(phone) {
+    if (!phone) return false;
+    
+    // Clean the phone number
+    const cleanPhone = phone.replace(/^\+977-?/, '').replace(/\s+/g, '');
+    
+    // Check if it's a valid Nepali mobile number (9XXXXXXXXX)
+    const phoneRegex = /^9[0-9]{9}$/;
+    return phoneRegex.test(cleanPhone);
+  }
+
+  // Format phone number for display
+  formatPhoneNumber(phone) {
+    if (!phone) return '';
+    
+    const cleanPhone = phone.replace(/^\+977-?/, '').replace(/\s+/g, '');
+    
+    if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+      return `+977-${cleanPhone}`;
+    }
+    
+    return phone;
   }
 }
 
