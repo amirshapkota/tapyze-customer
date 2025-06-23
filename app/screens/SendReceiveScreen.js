@@ -13,7 +13,8 @@ import {
   StyleSheet 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import QRCode from 'react-native-qrcode-svg';
+// Replace QRCode import with SimpleQRCode
+import PaymentQrCode from '../components/PaymentQrCode'; // Adjust path as needed
 import { Camera, CameraView } from 'expo-camera';
 import { useAuth } from '../context/AuthContext';
 import walletService from '../services/walletService';
@@ -243,43 +244,42 @@ const SendReceiveScreen = ({ navigation }) => {
   };
 
   const handleScanQR = async () => {
-  if (hasPermission === null) {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === 'granted');
-    
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
+    if (hasPermission === null) {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
+        return;
+      }
+    } else if (hasPermission === false) {
+      Alert.alert('Permission Denied', 'Please enable camera permission in settings');
       return;
     }
-  } else if (hasPermission === false) {
-    Alert.alert('Permission Denied', 'Please enable camera permission in settings');
-    return;
-  }
 
-  // Reset scanned state when opening scanner
-  setScanned(false);
-  setScannerModalVisible(true);
-};
+    // Reset scanned state when opening scanner
+    setScanned(false);
+    setScannerModalVisible(true);
+  };
 
   const handleBarCodeScanned = ({ data }) => {
-  if (scanned) return;
-  
-  setScanned(true);
-  
-  // Close scanner modal immediately
-  setScannerModalVisible(false);
-  
-  const phoneNumber = data.trim();
-  const cleanPhone = phoneNumber.replace(/^\+977-?/, '').replace(/\s+/g, '');
-  
-  if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
-    setRecipientPhone(cleanPhone);
-    // Remove the Alert popup - just set the phone number
-    // Alert.alert('QR Scanned!', `Phone number detected: ${cleanPhone}`);
-  } else {
-    Alert.alert('Invalid QR Code', 'Please scan a valid TAPYZE payment QR code.');
-  }
-};
+    if (scanned) return;
+    
+    setScanned(true);
+    
+    // Close scanner modal immediately
+    setScannerModalVisible(false);
+    
+    const phoneNumber = data.trim();
+    const cleanPhone = phoneNumber.replace(/^\+977-?/, '').replace(/\s+/g, '');
+    
+    if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
+      setRecipientPhone(cleanPhone);
+      // Remove the Alert popup - just set the phone number
+    } else {
+      Alert.alert('Invalid QR Code', 'Please scan a valid TAPYZE payment QR code.');
+    }
+  };
 
   const generateQRData = () => {
     return user?.phone || '';
@@ -575,17 +575,13 @@ const SendReceiveScreen = ({ navigation }) => {
         </Text>
         
         <View style={styles.qrCodeWrapper}>
-          <QRCode
+          {/* Updated QR Code component */}
+          <PaymentQrCode
             value={generateQRData()}
             size={220}
-            color="#000000"
-            backgroundColor="#FFFFFF"
             logo={require('../assets/logo.png')}
             logoSize={44}
-            logoBackgroundColor="transparent"
-            logoMargin={4}
-            logoBorderRadius={12}
-            enableLinearGradient={false}
+            logoBackgroundColor="#FFFFFF"
           />
         </View>
         
@@ -787,8 +783,6 @@ const SendReceiveScreen = ({ navigation }) => {
             <Text style={cameraStyles.instructionsText}>
               Make sure the QR code is clearly visible
             </Text>
-            
-            
           </View>
         </View>
       </Modal>
@@ -918,18 +912,6 @@ const cameraStyles = StyleSheet.create({
     color: '#CCCCCC',
     textAlign: 'center',
     lineHeight: 20,
-  },
-  scanAgainButton: {
-    marginTop: 20,
-    backgroundColor: 'rgba(237, 123, 14, 0.8)',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  scanAgainText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 
